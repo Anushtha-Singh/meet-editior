@@ -90,7 +90,12 @@ function PresentationViewer({
     const page = await pdf.getPage(presentation.page);
     const baseViewport = page.getViewport({ scale: 1 });
     const availableWidth = Math.max(container.clientWidth - 24, 280);
-    const scale = Math.min(availableWidth / baseViewport.width, 2);
+    const availableHeight = Math.max(container.clientHeight - 24, 160);
+    const scale = Math.min(
+      availableWidth / baseViewport.width,
+      availableHeight / baseViewport.height,
+      2,
+    );
     const viewport = page.getViewport({ scale });
     const pixelRatio = Math.min(window.devicePixelRatio || 1, 3);
 
