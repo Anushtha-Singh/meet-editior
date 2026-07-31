@@ -1,0 +1,85 @@
+const { createServer } = require("http");
+const { Server } = require("socket.io");
+const { io: createClient } = require("socket.io-client");
+const registerClassroomHandlers = require("./classroomSocket");
+
+const waitForEvent = (socket, eventName) =>
+    new Promise((resolve) => socket.once(eventName, resolve));
+
+const connectClient = (url) =>
+    new Promise((resolve) => {
+        const socket = createClient(url);
+        socket.once("connect", () => resolve(socket));
+    });
+
+const run = async () => {
+    const httpServer = createServer();
+    const io = new Server(httpServer);
+    registerClassroomHandlers(io);
+
+    await new Promise((resolve) => httpServer.listen(0, resolve));
+
+    const { port } = httpServer.address();
+    const url = `http://localhost:${port}`;
+    const teacher = await connectClient(url);
+    const anush = await connectClient(url);
+    const rahul = await connectClient(url);
+
+    teacher.emit("teacher-join");
+    await waitForEvent(teacher, "students-update");
+
+    const firstJoin = waitForEvent(teacher, "students-update");
+    anush.emit("join-class", "Anush");
+    await firstJoin;
+
+    const secondJoin = waitForEvent(teacher, "students-update");
+    rahul.emit("join-class", "Rahul");
+    const joinedStudents = await secondJoin;
+
+    if (joinedStudents.length !== 2) {
+        throw new Error("Teacher did not receive both students.");
+    }
+
+    const codeUpdate = waitForEvent(teacher, "code-update");
+    anush.emit("code-change", 'print("Live")');
+    const updatedAnush = await codeUpdate;
+
+    if (
+        updatedAnush.socketId !== anush.id ||
+        updatedAnush.code !== 'print("Live")'
+    ) {
+        throw new Error("Teacher did not receive the live code update.");
+    }
+
+    const executionUpdate = waitForEvent(teacher, "execution-update");
+    anush.emit("execution-change", {
+        status: "completed",
+        output: "Live",
+        error: "",
+    });
+    const executedStudent = await executionUpdate;
+
+    if (executedStudent.execution.output !== "Live") {
+        throw new Error("Teacher did not receive the student's output.");
+    }
+
+    const disconnectUpdate = waitForEvent(teacher, "students-update");
+    rahul.disconnect();
+    const remainingStudents = await disconnectUpdate;
+
+    if (remainingStudents.length !== 1) {
+        throw new Error("Disconnected student remained in the roster.");
+    }
+
+    teacher.disconnect();
+    anush.disconnect();
+    io.close();
+    await new Promise((resolve) => httpServer.close(resolve));
+
+    console.log("Classroom socket integration test passed.");
+};
+
+run().catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+});
