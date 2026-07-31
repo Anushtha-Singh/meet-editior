@@ -119,6 +119,29 @@ button:disabled {
   overflow: auto;
 }
 
+.output-panel-resizable {
+  flex: 0 0 auto;
+  max-height: 65vh;
+  min-height: 90px;
+}
+
+.output-resize-handle {
+  align-items: center;
+  background: #1e293b;
+  cursor: ns-resize;
+  display: flex;
+  height: 14px;
+  justify-content: center;
+  touch-action: none;
+}
+
+.output-resize-handle span {
+  background: #64748b;
+  border-radius: 999px;
+  height: 3px;
+  width: 48px;
+}
+
 .output-header {
   align-items: center;
   background: #111827;
@@ -133,6 +156,21 @@ button:disabled {
 
 .output-header span {
   color: #8ba7ff;
+}
+
+.output-header-actions {
+  align-items: center;
+  display: flex;
+  gap: 7px;
+}
+
+.output-header-actions button {
+  background: #26324a;
+  font-size: 16px;
+  line-height: 1;
+  min-height: 28px;
+  min-width: 30px;
+  padding: 4px 8px;
 }
 
 .output-panel pre {
@@ -491,12 +529,19 @@ button:disabled {
   }
 
   .mobile-symbol-toolbar {
+    border-bottom: 1px solid #283247;
+    border-top: 0;
     display: flex;
+    order: -1;
   }
 
   .output-panel {
     max-height: 150px;
     min-height: 90px;
+  }
+
+  .output-panel.output-panel-resizable {
+    max-height: 65vh;
   }
 
   .shared-editor {

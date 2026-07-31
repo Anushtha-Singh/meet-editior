@@ -199,6 +199,7 @@ function StudentPage() {
               isRunning ? "running" : output || runError ? "completed" : "idle"
             }
             runtimeStatus={pythonStatus}
+            resizable
           />
 
           <footer className="app-footer">
