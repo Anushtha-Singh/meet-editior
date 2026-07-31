@@ -35,6 +35,7 @@ function PresentationViewer({
   const pdfCanvasRef = useRef();
   const annotationCanvasRef = useRef();
   const pdfRef = useRef();
+  const renderTaskRef = useRef();
   const activeStrokeRef = useRef();
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
   const [loadResult, setLoadResult] = useState({ data: "", error: "" });
@@ -91,7 +92,7 @@ function PresentationViewer({
     const availableWidth = Math.max(container.clientWidth - 24, 280);
     const scale = Math.min(availableWidth / baseViewport.width, 2);
     const viewport = page.getViewport({ scale });
-    const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+    const pixelRatio = Math.min(window.devicePixelRatio || 1, 3);
 
     canvas.width = Math.floor(viewport.width * pixelRatio);
     canvas.height = Math.floor(viewport.height * pixelRatio);
@@ -99,21 +100,47 @@ function PresentationViewer({
     canvas.style.height = `${viewport.height}px`;
 
     const context = canvas.getContext("2d");
-    await page.render({
+    renderTaskRef.current?.cancel();
+    const renderTask = page.render({
       canvasContext: context,
       viewport,
       transform:
         pixelRatio === 1 ? undefined : [pixelRatio, 0, 0, pixelRatio, 0, 0],
-    }).promise;
+    });
+    renderTaskRef.current = renderTask;
 
-    setCanvasSize({ width: viewport.width, height: viewport.height });
+    try {
+      await renderTask.promise;
+
+      if (renderTaskRef.current === renderTask) {
+        setCanvasSize({ width: viewport.width, height: viewport.height });
+      }
+    } catch (error) {
+      if (error?.name !== "RenderingCancelledException") {
+        throw error;
+      }
+    }
   }, [presentation.page]);
 
   useEffect(() => {
-    renderPage();
-    const handleResize = () => renderPage();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    const container = containerRef.current;
+    let frameId;
+    const resizeObserver = new ResizeObserver(() => {
+      window.cancelAnimationFrame(frameId);
+      frameId = window.requestAnimationFrame(() => {
+        renderPage().catch(() => undefined);
+      });
+    });
+
+    if (container) {
+      resizeObserver.observe(container);
+    }
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      resizeObserver.disconnect();
+      renderTaskRef.current?.cancel();
+    };
   }, [presentation.data, presentation.page, renderPage, status]);
 
   useEffect(() => {
@@ -123,7 +150,7 @@ function PresentationViewer({
       return;
     }
 
-    const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+    const pixelRatio = Math.min(window.devicePixelRatio || 1, 3);
     canvas.width = Math.floor(canvasSize.width * pixelRatio);
     canvas.height = Math.floor(canvasSize.height * pixelRatio);
     canvas.style.width = `${canvasSize.width}px`;

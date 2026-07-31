@@ -176,6 +176,7 @@ function TeacherPage() {
             <CodeEditor
               code={teacherCode}
               onChange={handleTeacherCodeChange}
+              mobileToolbar
             />
           </div>
         </section>
