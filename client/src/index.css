@@ -389,7 +389,14 @@ button:disabled {
 }
 
 .teacher-shared-editor {
-  height: calc(100vh - 130px);
+  flex: 1;
+  min-height: 0;
+}
+
+.teacher-code-editor-frame {
+  height: calc(100dvh - 174px);
+  min-height: 420px;
+  width: 100%;
 }
 
 .teacher-presentation {
@@ -546,6 +553,11 @@ button:disabled {
 
   .shared-editor {
     min-height: 0;
+  }
+
+  .teacher-code-editor-frame {
+    height: calc(100dvh - 156px);
+    min-height: 320px;
   }
 
   .shared-workspace {

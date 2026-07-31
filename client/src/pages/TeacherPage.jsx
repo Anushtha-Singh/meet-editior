@@ -172,7 +172,7 @@ function TeacherPage() {
             <strong>Code shared with every student</strong>
             <span>Updates live</span>
           </div>
-          <div className="shared-editor">
+          <div className="teacher-code-editor-frame">
             <CodeEditor
               code={teacherCode}
               onChange={handleTeacherCodeChange}
