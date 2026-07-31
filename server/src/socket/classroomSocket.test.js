@@ -63,6 +63,44 @@ const run = async () => {
         throw new Error("Teacher did not receive the student's output.");
     }
 
+    const teacherCodeUpdate = waitForEvent(anush, "teacher-code-update");
+    teacher.emit("teacher-code-change", 'print("Teacher")');
+
+    if ((await teacherCodeUpdate) !== 'print("Teacher")') {
+        throw new Error("Student did not receive the teacher's code.");
+    }
+
+    const presentationState = waitForEvent(anush, "presentation-state");
+    teacher.emit("presentation-upload", {
+        name: "lesson.pdf",
+        data: "data:application/pdf;base64,JVBERi0=",
+    });
+
+    if ((await presentationState).name !== "lesson.pdf") {
+        throw new Error("Student did not receive the presentation.");
+    }
+
+    const pageUpdate = waitForEvent(anush, "presentation-page-update");
+    teacher.emit("presentation-page-count", 3);
+
+    if ((await pageUpdate).pageCount !== 3) {
+        throw new Error("Student did not receive the presentation page count.");
+    }
+
+    const annotationUpdate = waitForEvent(anush, "annotation-update");
+    teacher.emit("annotation-add", {
+        tool: "pen",
+        color: "#ef4444",
+        points: [
+            { x: 0.1, y: 0.1 },
+            { x: 0.2, y: 0.2 },
+        ],
+    });
+
+    if ((await annotationUpdate).points.length !== 2) {
+        throw new Error("Student did not receive the teacher's annotation.");
+    }
+
     const disconnectUpdate = waitForEvent(teacher, "students-update");
     rahul.disconnect();
     const remainingStudents = await disconnectUpdate;

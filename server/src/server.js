@@ -14,6 +14,7 @@ const io = new Server(server, {
         origin: allowedOrigins,
         methods: ["GET", "POST"],
     },
+    maxHttpBufferSize: 12_000_000,
 });
 
 registerClassroomHandlers(io);

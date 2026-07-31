@@ -19,7 +19,8 @@ body {
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 
@@ -42,6 +43,40 @@ button:disabled {
   display: flex;
   flex-direction: column;
   height: 100%;
+}
+
+.student-workspace {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.code-editor-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.monaco-container {
+  flex: 1;
+  min-height: 0;
+}
+
+.mobile-symbol-toolbar {
+  background: #111827;
+  border-top: 1px solid #283247;
+  display: none;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 7px;
+}
+
+.mobile-symbol-toolbar button {
+  background: #26324a;
+  flex: 0 0 auto;
+  min-width: 42px;
+  padding: 8px 10px;
 }
 
 .app-header,
@@ -201,6 +236,8 @@ button:disabled {
 }
 
 .teacher-page {
+  display: flex;
+  flex-direction: column;
   min-height: 100%;
 }
 
@@ -259,6 +296,177 @@ button:disabled {
   color: #e5e7eb;
 }
 
+.workspace-tabs {
+  background: #0f172a;
+  border-bottom: 1px solid #283247;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 8px 14px;
+}
+
+.workspace-tabs button {
+  background: transparent;
+  color: #94a3b8;
+  flex: 0 0 auto;
+}
+
+.workspace-tabs button.active {
+  background: #263a72;
+  color: white;
+}
+
+.teacher-tabs {
+  position: sticky;
+  top: 76px;
+  z-index: 2;
+}
+
+.shared-workspace,
+.teacher-shared-editor {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.shared-workspace-title {
+  align-items: center;
+  background: #151c2e;
+  border-bottom: 1px solid #283247;
+  color: #cbd5e1;
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 16px;
+}
+
+.shared-workspace-title span {
+  color: #8ba7ff;
+  font-size: 12px;
+}
+
+.shared-editor {
+  flex: 1;
+  min-height: 420px;
+}
+
+.teacher-shared-editor {
+  height: calc(100vh - 130px);
+}
+
+.teacher-presentation {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: calc(100vh - 130px);
+}
+
+.presentation-controls {
+  align-items: center;
+  background: #151c2e;
+  border-bottom: 1px solid #283247;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 14px;
+}
+
+.presentation-controls button,
+.upload-button {
+  padding: 8px 12px;
+}
+
+.presentation-controls select {
+  background: #26324a;
+  border: 1px solid #3a4968;
+  border-radius: 7px;
+  color: white;
+  padding: 8px;
+}
+
+.presentation-controls input[type="color"] {
+  background: transparent;
+  border: 0;
+  height: 38px;
+  padding: 2px;
+  width: 44px;
+}
+
+.upload-button {
+  background: #4f7cff;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.upload-button input {
+  display: none;
+}
+
+.secondary-button {
+  background: #334155;
+}
+
+.form-error {
+  background: #3f1722;
+  color: #fca5a5;
+  margin: 0;
+  padding: 8px 14px;
+}
+
+.presentation-name {
+  background: #0f172a;
+  color: #94a3b8;
+  font-size: 12px;
+  padding: 7px 14px;
+}
+
+.presentation-stage {
+  align-items: flex-start;
+  background: #070b13;
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  min-height: 0;
+  overflow: auto;
+  padding: 12px;
+}
+
+.presentation-canvas-stack {
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.45);
+  line-height: 0;
+  position: relative;
+}
+
+.presentation-canvas-stack canvas {
+  display: block;
+  max-width: 100%;
+}
+
+.annotation-canvas {
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+}
+
+.annotation-canvas.drawing {
+  cursor: crosshair;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.presentation-empty {
+  align-items: center;
+  color: #94a3b8;
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  min-height: 320px;
+  padding: 24px;
+  text-align: center;
+}
+
 @media (max-width: 600px) {
   .student-grid {
     grid-template-columns: 1fr;
@@ -271,5 +479,41 @@ button:disabled {
 
   .app-footer span {
     display: none;
+  }
+
+  .app-header h1 {
+    font-size: 17px;
+  }
+
+  .connection {
+    max-width: 145px;
+    text-align: right;
+  }
+
+  .mobile-symbol-toolbar {
+    display: flex;
+  }
+
+  .output-panel {
+    max-height: 150px;
+    min-height: 90px;
+  }
+
+  .shared-editor {
+    min-height: 0;
+  }
+
+  .shared-workspace {
+    min-height: 0;
+  }
+
+  .presentation-controls {
+    padding: 8px;
+  }
+
+  .presentation-controls button,
+  .upload-button {
+    font-size: 12px;
+    padding: 8px;
   }
 }

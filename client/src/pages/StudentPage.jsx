@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import CodeEditor from "../components/CodeEditor";
 import OutputPanel from "../components/OutputPanel";
+import PresentationViewer from "../components/PresentationViewer";
 import useCodeSync from "../hooks/useCodeSync";
+import useSharedClassroom from "../hooks/useSharedClassroom";
 import useSocketStatus from "../hooks/useSocketStatus";
 import { preparePython, runPython } from "../services/pythonRunner";
 import socket from "../services/socket";
@@ -16,9 +18,11 @@ function StudentPage() {
   const [runError, setRunError] = useState("");
   const [isRunning, setIsRunning] = useState(false);
   const [pythonStatus, setPythonStatus] = useState("loading");
+  const [activeTab, setActiveTab] = useState("code");
   const codeRef = useRef(code);
   const isConnected = useSocketStatus();
   const emitCodeChange = useCodeSync();
+  const { teacherCode, presentation } = useSharedClassroom();
 
   useEffect(() => {
     if (!studentName) {
@@ -43,7 +47,7 @@ function StudentPage() {
 
   useEffect(() => {
     if (!studentName) {
-      return;
+      return undefined;
     }
 
     let isActive = true;
@@ -154,31 +158,94 @@ function StudentPage() {
         </span>
       </header>
 
-      <section className="student-editor">
-        <CodeEditor code={code} onChange={handleCodeChange} />
-      </section>
-
-      <OutputPanel
-        output={output}
-        error={runError}
-        status={isRunning ? "running" : output || runError ? "completed" : "idle"}
-        runtimeStatus={pythonStatus}
-      />
-
-      <footer className="app-footer">
+      <nav className="workspace-tabs" aria-label="Student workspace">
         <button
+          className={activeTab === "code" ? "active" : ""}
           type="button"
-          onClick={handleRun}
-          disabled={isRunning || pythonStatus === "loading"}
+          onClick={() => setActiveTab("code")}
         >
-          {isRunning
-            ? "Running..."
-            : pythonStatus === "loading"
-              ? "Preparing Python..."
-              : "▶ Run Code"}
+          My Code
         </button>
-        <span>Python 3 · Browser runtime</span>
-      </footer>
+        <button
+          className={activeTab === "teacher" ? "active" : ""}
+          type="button"
+          onClick={() => setActiveTab("teacher")}
+        >
+          Teacher Code
+        </button>
+        <button
+          className={activeTab === "slides" ? "active" : ""}
+          type="button"
+          onClick={() => setActiveTab("slides")}
+        >
+          Presentation
+        </button>
+      </nav>
+
+      {activeTab === "code" && (
+        <div className="student-workspace">
+          <section className="student-editor">
+            <CodeEditor
+              code={code}
+              onChange={handleCodeChange}
+              mobileToolbar
+            />
+          </section>
+
+          <OutputPanel
+            output={output}
+            error={runError}
+            status={
+              isRunning ? "running" : output || runError ? "completed" : "idle"
+            }
+            runtimeStatus={pythonStatus}
+          />
+
+          <footer className="app-footer">
+            <button
+              type="button"
+              onClick={handleRun}
+              disabled={isRunning || pythonStatus === "loading"}
+            >
+              {isRunning
+                ? "Running..."
+                : pythonStatus === "loading"
+                  ? "Preparing Python..."
+                  : "▶ Run Code"}
+            </button>
+            <span>Python 3 · Browser runtime</span>
+          </footer>
+        </div>
+      )}
+
+      {activeTab === "teacher" && (
+        <section className="shared-workspace">
+          <div className="shared-workspace-title">
+            <strong>Teacher’s live editor</strong>
+            <span>Read only</span>
+          </div>
+          <div className="shared-editor">
+            <CodeEditor
+              code={teacherCode || "# Waiting for the teacher to type..."}
+              readOnly
+            />
+          </div>
+        </section>
+      )}
+
+      {activeTab === "slides" && (
+        <section className="shared-workspace">
+          <div className="shared-workspace-title">
+            <strong>{presentation.name || "Class presentation"}</strong>
+            <span>
+              {presentation.pageCount
+                ? `Page ${presentation.page} of ${presentation.pageCount}`
+                : "Waiting for PDF"}
+            </span>
+          </div>
+          <PresentationViewer presentation={presentation} />
+        </section>
+      )}
     </main>
   );
 }
