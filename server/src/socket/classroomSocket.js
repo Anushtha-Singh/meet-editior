@@ -106,29 +106,6 @@ const registerClassroomHandlers = (io) => {
             io.emit("teacher-execution-update", teacherExecution);
         });
 
-        socket.on("teacher-edit-student", (payload) => {
-            const student = students.get(payload?.socketId);
-
-            if (!student || typeof payload.code !== "string") {
-                return;
-            }
-
-            const nextCode = payload.code.slice(0, MAX_CODE_LENGTH);
-
-            if (nextCode === student.code) {
-                return;
-            }
-
-            student.code = nextCode;
-            students.set(student.socketId, student);
-
-            io.to(student.socketId).emit("teacher-code-replace", student.code);
-            io.emit("code-update", {
-                socketId: student.socketId,
-                code: student.code,
-            });
-        });
-
         socket.on("teacher-student-feedback", (payload) => {
             const student = students.get(payload?.socketId);
 

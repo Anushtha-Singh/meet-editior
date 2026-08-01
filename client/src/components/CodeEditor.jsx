@@ -33,7 +33,6 @@ function CodeEditor({
 }) {
   const editorRef = useRef();
   const decorationsRef = useRef();
-  const isApplyingExternalCodeRef = useRef(false);
   const editorOptions = useMemo(
     () => ({
       automaticLayout: true,
@@ -62,23 +61,7 @@ function CodeEditor({
     decorationsRef.current?.set(getFeedbackDecorations(highlightedLine));
   }, [highlightedLine]);
 
-  useEffect(() => {
-    const model = editorRef.current?.getModel();
-
-    if (!model || model.getValue() === code) {
-      return;
-    }
-
-    isApplyingExternalCodeRef.current = true;
-    model.setValue(code);
-    isApplyingExternalCodeRef.current = false;
-  }, [code]);
-
   const handleChange = (value) => {
-    if (isApplyingExternalCodeRef.current) {
-      return;
-    }
-
     onChange?.(value ?? "");
   };
 
@@ -125,7 +108,7 @@ function CodeEditor({
           height="100%"
           language="python"
           theme="vs-dark"
-          defaultValue={code}
+          value={code}
           onChange={handleChange}
           onMount={(editor) => {
             editorRef.current = editor;

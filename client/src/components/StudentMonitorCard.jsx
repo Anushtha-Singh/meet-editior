@@ -4,7 +4,6 @@ import CodeEditor from "./CodeEditor";
 import OutputPanel from "./OutputPanel";
 
 function StudentMonitorCard({ student }) {
-  const [isEditing, setIsEditing] = useState(false);
   const [selectedLine, setSelectedLine] = useState(student.feedback?.line ?? 1);
   const [message, setMessage] = useState(student.feedback?.message ?? "");
 
@@ -32,32 +31,15 @@ function StudentMonitorCard({ student }) {
       </div>
 
       <div className="student-review-controls">
-        <button
-          className={isEditing ? "danger-button" : "secondary-button"}
-          type="button"
-          onClick={() => setIsEditing((current) => !current)}
-        >
-          {isEditing ? "Stop editing" : "Edit student code"}
-        </button>
-        <span>
-          {isEditing
-            ? "Teacher edit mode: latest change wins"
-            : `Selected line: ${selectedLine}`}
-        </span>
+        <span>Read-only monitoring · Selected line: {selectedLine}</span>
       </div>
 
       <div className="teacher-editor">
         <CodeEditor
           code={student.code}
-          readOnly={!isEditing}
+          readOnly
           highlightedLine={student.feedback?.line}
           onCursorLineChange={setSelectedLine}
-          onChange={(code) =>
-            socket.emit("teacher-edit-student", {
-              socketId: student.socketId,
-              code,
-            })
-          }
         />
       </div>
 

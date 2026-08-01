@@ -388,10 +388,6 @@ button:disabled {
   padding: 8px 10px;
 }
 
-.danger-button {
-  background: #b91c1c;
-}
-
 .teacher-editor {
   height: 340px;
 }

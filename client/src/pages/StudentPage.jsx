@@ -20,7 +20,6 @@ function StudentPage() {
   const [pythonStatus, setPythonStatus] = useState("loading");
   const [activeTab, setActiveTab] = useState("code");
   const [teacherFeedback, setTeacherFeedback] = useState(null);
-  const [teacherEditNotice, setTeacherEditNotice] = useState("");
   const [studentPdfPage, setStudentPdfPage] = useState(null);
   const codeRef = useRef(code);
   const isConnected = useSocketStatus();
@@ -53,21 +52,9 @@ function StudentPage() {
   }, [studentName]);
 
   useEffect(() => {
-    const handleTeacherCodeReplace = (nextCode) => {
-      if (nextCode === codeRef.current) {
-        return;
-      }
-
-      codeRef.current = nextCode;
-      setCode(nextCode);
-      setTeacherEditNotice("Your teacher updated your code.");
-    };
-
-    socket.on("teacher-code-replace", handleTeacherCodeReplace);
     socket.on("student-feedback", setTeacherFeedback);
 
     return () => {
-      socket.off("teacher-code-replace", handleTeacherCodeReplace);
       socket.off("student-feedback", setTeacherFeedback);
     };
   }, []);
@@ -211,22 +198,18 @@ function StudentPage() {
 
       {activeTab === "code" && (
         <div className="student-workspace">
-          {(teacherFeedback || teacherEditNotice) && (
+          {teacherFeedback && (
             <div className="teacher-feedback-banner">
               <div>
-                {teacherFeedback && (
-                  <strong>
-                    Teacher note on line {teacherFeedback.line}: {" "}
-                    {teacherFeedback.message}
-                  </strong>
-                )}
-                {teacherEditNotice && <span>{teacherEditNotice}</span>}
+                <strong>
+                  Teacher note on line {teacherFeedback.line}: {" "}
+                  {teacherFeedback.message}
+                </strong>
               </div>
               <button
                 type="button"
                 onClick={() => {
                   setTeacherFeedback(null);
-                  setTeacherEditNotice("");
                 }}
               >
                 Dismiss

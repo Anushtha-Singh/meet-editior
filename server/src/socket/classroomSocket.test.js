@@ -51,16 +51,6 @@ const run = async () => {
         throw new Error("Teacher did not receive the live code update.");
     }
 
-    const teacherReplacement = waitForEvent(anush, "teacher-code-replace");
-    teacher.emit("teacher-edit-student", {
-        socketId: anush.id,
-        code: 'print("Teacher edited")',
-    });
-
-    if ((await teacherReplacement) !== 'print("Teacher edited")') {
-        throw new Error("Student did not receive the teacher's code edit.");
-    }
-
     const studentFeedback = waitForEvent(anush, "student-feedback");
     const teacherFeedbackUpdate = waitForEvent(teacher, "student-feedback-update");
     teacher.emit("teacher-student-feedback", {
