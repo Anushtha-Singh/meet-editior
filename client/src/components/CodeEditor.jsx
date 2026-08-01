@@ -1,5 +1,5 @@
 import Editor from "@monaco-editor/react";
-import { useEffect, useRef } from "react";
+import { memo, useEffect, useMemo, useRef } from "react";
 
 const SYMBOLS = ["()", "[]", "{}", ":", '"', "'", "=", "_", "#"];
 
@@ -33,6 +33,25 @@ function CodeEditor({
 }) {
   const editorRef = useRef();
   const decorationsRef = useRef();
+  const editorOptions = useMemo(
+    () => ({
+      automaticLayout: true,
+      fontSize: 15,
+      minimap: { enabled: false },
+      readOnly,
+      scrollBeyondLastLine: false,
+      smoothScrolling: true,
+      glyphMargin: Boolean(highlightedLine),
+      scrollbar: {
+        vertical: "visible",
+        horizontal: "visible",
+        verticalScrollbarSize: 12,
+        horizontalScrollbarSize: 12,
+        alwaysConsumeMouseWheel: false,
+      },
+    }),
+    [highlightedLine, readOnly],
+  );
 
   useEffect(() => {
     if (!editorRef.current) {
@@ -101,22 +120,7 @@ function CodeEditor({
               onCursorLineChange?.(position.lineNumber);
             });
           }}
-          options={{
-            automaticLayout: true,
-            fontSize: 15,
-            minimap: { enabled: false },
-            readOnly,
-            scrollBeyondLastLine: false,
-            smoothScrolling: true,
-            glyphMargin: Boolean(highlightedLine),
-            scrollbar: {
-              vertical: "visible",
-              horizontal: "visible",
-              verticalScrollbarSize: 12,
-              horizontalScrollbarSize: 12,
-              alwaysConsumeMouseWheel: false,
-            },
-          }}
+          options={editorOptions}
         />
       </div>
       {mobileToolbar && !readOnly && (
@@ -151,4 +155,4 @@ function CodeEditor({
   );
 }
 
-export default CodeEditor;
+export default memo(CodeEditor);

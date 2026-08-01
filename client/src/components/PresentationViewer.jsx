@@ -28,7 +28,6 @@ function PresentationViewer({
   canAnnotate = false,
   tool = "pen",
   color = "#ef4444",
-  zoom = 1,
   onPageCount,
   onStroke,
 }) {
@@ -96,7 +95,7 @@ function PresentationViewer({
       availableWidth / baseViewport.width,
       availableHeight / baseViewport.height,
       2,
-    ) * zoom;
+    );
     const viewport = page.getViewport({ scale });
     const pixelRatio = Math.min(window.devicePixelRatio || 1, 3);
 
@@ -126,7 +125,7 @@ function PresentationViewer({
         throw error;
       }
     }
-  }, [presentation.page, zoom]);
+  }, [presentation.page]);
 
   useEffect(() => {
     const container = containerRef.current;

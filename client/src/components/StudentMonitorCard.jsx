@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import socket from "../services/socket";
 import CodeEditor from "./CodeEditor";
 import OutputPanel from "./OutputPanel";
@@ -50,7 +50,7 @@ function StudentMonitorCard({ student }) {
         <CodeEditor
           code={student.code}
           readOnly={!isEditing}
-          highlightedLine={student.feedback?.line ?? selectedLine}
+          highlightedLine={student.feedback?.line}
           onCursorLineChange={setSelectedLine}
           onChange={(code) =>
             socket.emit("teacher-edit-student", {
@@ -91,4 +91,4 @@ function StudentMonitorCard({ student }) {
   );
 }
 
-export default StudentMonitorCard;
+export default memo(StudentMonitorCard);

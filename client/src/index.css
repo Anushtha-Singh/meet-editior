@@ -552,33 +552,31 @@ button:disabled {
   overflow: auto;
   padding: 12px;
   overscroll-behavior: contain;
-  touch-action: pan-x pan-y;
+  touch-action: pan-x pan-y pinch-zoom;
   -webkit-overflow-scrolling: touch;
 }
 
-.presentation-zoom-controls {
+.presentation-student-controls {
   align-items: center;
   display: flex;
   gap: 7px;
 }
 
-.presentation-zoom-controls button {
+.presentation-student-controls button {
   background: #26324a;
   min-height: 30px;
   min-width: 34px;
   padding: 5px 8px;
 }
 
-.presentation-zoom-controls .follow-teacher-button {
+.presentation-student-controls .follow-teacher-button {
   font-size: 11px;
   min-width: 76px;
 }
 
-.presentation-zoom-controls strong {
-  color: #cbd5e1;
+.presentation-student-controls small {
+  color: #94a3b8;
   font-size: 12px;
-  min-width: 38px;
-  text-align: center;
 }
 
 .presentation-canvas-stack {

@@ -21,7 +21,6 @@ function StudentPage() {
   const [activeTab, setActiveTab] = useState("code");
   const [teacherFeedback, setTeacherFeedback] = useState(null);
   const [teacherEditNotice, setTeacherEditNotice] = useState("");
-  const [pdfZoom, setPdfZoom] = useState(1);
   const [studentPdfPage, setStudentPdfPage] = useState(null);
   const codeRef = useRef(code);
   const isConnected = useSocketStatus();
@@ -291,7 +290,7 @@ function StudentPage() {
         <section className="shared-workspace">
           <div className="shared-workspace-title">
             <strong>{presentation.name || "Class presentation"}</strong>
-            <div className="presentation-zoom-controls">
+            <div className="presentation-student-controls">
               <span>
                 {presentation.pageCount
                   ? `Page ${displayedPdfPage} of ${presentation.pageCount}`
@@ -330,28 +329,11 @@ function StudentPage() {
               >
                 {isFollowingTeacher ? "Following" : "Follow teacher"}
               </button>
-              <button
-                type="button"
-                disabled={pdfZoom <= 1}
-                onClick={() => setPdfZoom((current) => Math.max(current - 0.25, 1))}
-              >
-                −
-              </button>
-              <strong>{Math.round(pdfZoom * 100)}%</strong>
-              <button
-                type="button"
-                disabled={pdfZoom >= 2.5}
-                onClick={() =>
-                  setPdfZoom((current) => Math.min(current + 0.25, 2.5))
-                }
-              >
-                +
-              </button>
+              <small>Pinch to zoom</small>
             </div>
           </div>
           <PresentationViewer
             presentation={{ ...presentation, page: displayedPdfPage }}
-            zoom={pdfZoom}
           />
         </section>
       )}
