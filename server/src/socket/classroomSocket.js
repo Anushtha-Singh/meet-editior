@@ -17,6 +17,11 @@ const serializeStudents = (students) =>
 const registerClassroomHandlers = (io) => {
     const students = new Map();
     let teacherCode = '# Welcome to class\nprint("Follow along!")';
+    let teacherExecution = {
+        status: "idle",
+        output: "",
+        error: "",
+    };
     let presentation = {
         name: "",
         data: "",
@@ -31,6 +36,7 @@ const registerClassroomHandlers = (io) => {
 
     const sendSharedContent = (socket) => {
         socket.emit("teacher-code-update", teacherCode);
+        socket.emit("teacher-execution-update", teacherExecution);
         socket.emit("presentation-state", presentation);
     };
 
@@ -78,6 +84,26 @@ const registerClassroomHandlers = (io) => {
 
             teacherCode = rawCode.slice(0, MAX_CODE_LENGTH);
             socket.broadcast.emit("teacher-code-update", teacherCode);
+        });
+
+        socket.on("teacher-execution-change", (rawExecution) => {
+            if (!rawExecution || typeof rawExecution !== "object") {
+                return;
+            }
+
+            teacherExecution = {
+                status: rawExecution.status === "running" ? "running" : "completed",
+                output:
+                    typeof rawExecution.output === "string"
+                        ? rawExecution.output.slice(0, MAX_OUTPUT_LENGTH)
+                        : "",
+                error:
+                    typeof rawExecution.error === "string"
+                        ? rawExecution.error.slice(0, MAX_OUTPUT_LENGTH)
+                        : "",
+            };
+
+            io.emit("teacher-execution-update", teacherExecution);
         });
 
         socket.on("teacher-edit-student", (payload) => {

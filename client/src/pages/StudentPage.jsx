@@ -26,7 +26,7 @@ function StudentPage() {
   const codeRef = useRef(code);
   const isConnected = useSocketStatus();
   const emitCodeChange = useCodeSync();
-  const { teacherCode, presentation } = useSharedClassroom();
+  const { teacherCode, teacherExecution, presentation } = useSharedClassroom();
   const displayedPdfPage = presentation.pageCount
     ? Math.min(studentPdfPage ?? presentation.page, presentation.pageCount)
     : 1;
@@ -278,6 +278,12 @@ function StudentPage() {
               readOnly
             />
           </div>
+          <OutputPanel
+            output={teacherExecution.output}
+            error={teacherExecution.error}
+            status={teacherExecution.status}
+            resizable
+          />
         </section>
       )}
 

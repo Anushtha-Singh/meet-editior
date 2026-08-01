@@ -96,6 +96,20 @@ const run = async () => {
         throw new Error("Student did not receive the teacher's code.");
     }
 
+    const teacherExecutionUpdate = waitForEvent(
+        anush,
+        "teacher-execution-update",
+    );
+    teacher.emit("teacher-execution-change", {
+        status: "completed",
+        output: "Teacher output",
+        error: "",
+    });
+
+    if ((await teacherExecutionUpdate).output !== "Teacher output") {
+        throw new Error("Student did not receive the teacher's output.");
+    }
+
     const presentationState = waitForEvent(anush, "presentation-state");
     teacher.emit("presentation-upload", {
         name: "lesson.pdf",

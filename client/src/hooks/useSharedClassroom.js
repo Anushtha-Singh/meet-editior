@@ -11,6 +11,11 @@ const EMPTY_PRESENTATION = {
 
 function useSharedClassroom() {
   const [teacherCode, setTeacherCode] = useState("");
+  const [teacherExecution, setTeacherExecution] = useState({
+    status: "idle",
+    output: "",
+    error: "",
+  });
   const [presentation, setPresentation] = useState(EMPTY_PRESENTATION);
 
   useEffect(() => {
@@ -40,6 +45,7 @@ function useSharedClassroom() {
     };
 
     socket.on("teacher-code-update", setTeacherCode);
+    socket.on("teacher-execution-update", setTeacherExecution);
     socket.on("presentation-state", handlePresentationState);
     socket.on("presentation-page-update", handlePageUpdate);
     socket.on("annotation-update", handleAnnotation);
@@ -47,6 +53,7 @@ function useSharedClassroom() {
 
     return () => {
       socket.off("teacher-code-update", setTeacherCode);
+      socket.off("teacher-execution-update", setTeacherExecution);
       socket.off("presentation-state", handlePresentationState);
       socket.off("presentation-page-update", handlePageUpdate);
       socket.off("annotation-update", handleAnnotation);
@@ -54,7 +61,7 @@ function useSharedClassroom() {
     };
   }, []);
 
-  return { teacherCode, setTeacherCode, presentation };
+  return { teacherCode, setTeacherCode, teacherExecution, presentation };
 }
 
 export default useSharedClassroom;

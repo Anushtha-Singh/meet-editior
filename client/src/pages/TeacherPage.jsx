@@ -16,12 +16,11 @@ function TeacherPage() {
   const [annotationTool, setAnnotationTool] = useState("pen");
   const [annotationColor, setAnnotationColor] = useState("#ef4444");
   const [uploadError, setUploadError] = useState("");
-  const [teacherOutput, setTeacherOutput] = useState("");
-  const [teacherRunError, setTeacherRunError] = useState("");
   const [isTeacherRunning, setIsTeacherRunning] = useState(false);
   const [pythonStatus, setPythonStatus] = useState("loading");
   const isConnected = useSocketStatus();
-  const { teacherCode, setTeacherCode, presentation } = useSharedClassroom();
+  const { teacherCode, setTeacherCode, teacherExecution, presentation } =
+    useSharedClassroom();
 
   useEffect(() => {
     const joinAsTeacher = () => socket.emit("teacher-join");
@@ -96,15 +95,28 @@ function TeacherPage() {
 
   const handleTeacherRun = async () => {
     setIsTeacherRunning(true);
-    setTeacherOutput("");
-    setTeacherRunError("");
+    socket.emit("teacher-execution-change", {
+      status: "running",
+      output: "",
+      error: "",
+    });
 
     try {
       const result = await runPython(teacherCode);
-      setTeacherOutput(result.output || "Program finished with no output.");
-      setTeacherRunError(result.error || "");
+      const nextOutput = result.output || "Program finished with no output.";
+      const nextError = result.error || "";
+      socket.emit("teacher-execution-change", {
+        status: "completed",
+        output: nextOutput,
+        error: nextError,
+      });
     } catch (error) {
-      setTeacherRunError(error.message || "Unable to execute Python.");
+      const message = error.message || "Unable to execute Python.";
+      socket.emit("teacher-execution-change", {
+        status: "completed",
+        output: "",
+        error: message,
+      });
     } finally {
       setIsTeacherRunning(false);
     }
@@ -215,15 +227,9 @@ function TeacherPage() {
             />
           </div>
           <OutputPanel
-            output={teacherOutput}
-            error={teacherRunError}
-            status={
-              isTeacherRunning
-                ? "running"
-                : teacherOutput || teacherRunError
-                  ? "completed"
-                  : "idle"
-            }
+            output={teacherExecution.output}
+            error={teacherExecution.error}
+            status={isTeacherRunning ? "running" : teacherExecution.status}
             runtimeStatus={pythonStatus}
             resizable
           />
