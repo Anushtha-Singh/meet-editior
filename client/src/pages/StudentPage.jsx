@@ -54,6 +54,10 @@ function StudentPage() {
 
   useEffect(() => {
     const handleTeacherCodeReplace = (nextCode) => {
+      if (nextCode === codeRef.current) {
+        return;
+      }
+
       codeRef.current = nextCode;
       setCode(nextCode);
       setTeacherEditNotice("Your teacher updated your code.");

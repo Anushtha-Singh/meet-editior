@@ -113,7 +113,13 @@ const registerClassroomHandlers = (io) => {
                 return;
             }
 
-            student.code = payload.code.slice(0, MAX_CODE_LENGTH);
+            const nextCode = payload.code.slice(0, MAX_CODE_LENGTH);
+
+            if (nextCode === student.code) {
+                return;
+            }
+
+            student.code = nextCode;
             students.set(student.socketId, student);
 
             io.to(student.socketId).emit("teacher-code-replace", student.code);
@@ -299,7 +305,13 @@ const registerClassroomHandlers = (io) => {
                 return;
             }
 
-            student.code = rawCode.slice(0, MAX_CODE_LENGTH);
+            const nextCode = rawCode.slice(0, MAX_CODE_LENGTH);
+
+            if (nextCode === student.code) {
+                return;
+            }
+
+            student.code = nextCode;
             students.set(socket.id, student);
 
             socket.broadcast.emit("code-update", {
