@@ -6,11 +6,12 @@ const MAX_ANNOTATION_STROKES = 2_000;
 const MAX_POINTS_PER_STROKE = 1_000;
 
 const serializeStudents = (students) =>
-    Array.from(students.values()).map(({ socketId, name, code, execution }) => ({
+    Array.from(students.values()).map(({ socketId, name, code, execution, feedback }) => ({
         socketId,
         name,
         code,
         execution,
+        feedback,
     }));
 
 const registerClassroomHandlers = (io) => {
@@ -63,6 +64,7 @@ const registerClassroomHandlers = (io) => {
                     output: "",
                     error: "",
                 },
+                feedback: existingStudent?.feedback ?? null,
             });
 
             broadcastStudents();
@@ -76,6 +78,56 @@ const registerClassroomHandlers = (io) => {
 
             teacherCode = rawCode.slice(0, MAX_CODE_LENGTH);
             socket.broadcast.emit("teacher-code-update", teacherCode);
+        });
+
+        socket.on("teacher-edit-student", (payload) => {
+            const student = students.get(payload?.socketId);
+
+            if (!student || typeof payload.code !== "string") {
+                return;
+            }
+
+            student.code = payload.code.slice(0, MAX_CODE_LENGTH);
+            students.set(student.socketId, student);
+
+            io.to(student.socketId).emit("teacher-code-replace", student.code);
+            io.emit("code-update", {
+                socketId: student.socketId,
+                code: student.code,
+            });
+        });
+
+        socket.on("teacher-student-feedback", (payload) => {
+            const student = students.get(payload?.socketId);
+
+            if (!student) {
+                return;
+            }
+
+            if (payload.line === null) {
+                student.feedback = null;
+            } else {
+                const line = Number(payload.line);
+
+                if (!Number.isInteger(line) || line < 1 || line > 10_000) {
+                    return;
+                }
+
+                student.feedback = {
+                    line,
+                    message:
+                        typeof payload.message === "string"
+                            ? payload.message.trim().slice(0, 200)
+                            : "Please review this line.",
+                };
+            }
+
+            students.set(student.socketId, student);
+            io.to(student.socketId).emit("student-feedback", student.feedback);
+            socket.emit("student-feedback-update", {
+                socketId: student.socketId,
+                feedback: student.feedback,
+            });
         });
 
         socket.on("presentation-upload", (rawPresentation) => {

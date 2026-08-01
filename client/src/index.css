@@ -109,6 +109,43 @@ button:disabled {
 .student-editor {
   flex: 1;
   min-height: 0;
+  overflow: hidden;
+}
+
+.teacher-feedback-line {
+  background: rgba(245, 158, 11, 0.22);
+  border-bottom: 1px solid #f59e0b;
+  border-top: 1px solid #f59e0b;
+}
+
+.teacher-feedback-glyph {
+  background: #f59e0b;
+  border-radius: 50%;
+  margin-left: 5px;
+  width: 7px !important;
+}
+
+.teacher-feedback-banner {
+  align-items: center;
+  background: #3b2c0f;
+  border-bottom: 1px solid #a16207;
+  color: #fde68a;
+  display: flex;
+  font-size: 13px;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 8px 14px;
+}
+
+.teacher-feedback-banner div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.teacher-feedback-banner button {
+  background: #854d0e;
+  padding: 6px 9px;
 }
 
 .output-panel {
@@ -320,6 +357,41 @@ button:disabled {
   font-size: 12px;
 }
 
+.student-review-controls,
+.student-feedback-controls {
+  align-items: center;
+  background: #101827;
+  border-top: 1px solid #283247;
+  display: flex;
+  gap: 8px;
+  padding: 8px 10px;
+}
+
+.student-review-controls span {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.student-feedback-controls input {
+  background: #0b1020;
+  border: 1px solid #34415c;
+  border-radius: 7px;
+  color: white;
+  flex: 1;
+  min-width: 120px;
+  padding: 8px;
+}
+
+.student-feedback-controls button,
+.student-review-controls button {
+  font-size: 12px;
+  padding: 8px 10px;
+}
+
+.danger-button {
+  background: #b91c1c;
+}
+
 .teacher-editor {
   height: 340px;
 }
@@ -389,13 +461,16 @@ button:disabled {
 }
 
 .teacher-shared-editor {
-  flex: 1;
+  display: flex;
+  flex: none;
+  height: calc(100dvh - 174px);
+  flex-direction: column;
   min-height: 0;
 }
 
 .teacher-code-editor-frame {
-  height: calc(100dvh - 174px);
-  min-height: 420px;
+  flex: 1;
+  min-height: 220px;
   width: 100%;
 }
 
@@ -476,6 +551,29 @@ button:disabled {
   min-height: 0;
   overflow: auto;
   padding: 12px;
+  overscroll-behavior: contain;
+  touch-action: pan-x pan-y;
+  -webkit-overflow-scrolling: touch;
+}
+
+.presentation-zoom-controls {
+  align-items: center;
+  display: flex;
+  gap: 7px;
+}
+
+.presentation-zoom-controls button {
+  background: #26324a;
+  min-height: 30px;
+  min-width: 34px;
+  padding: 5px 8px;
+}
+
+.presentation-zoom-controls strong {
+  color: #cbd5e1;
+  font-size: 12px;
+  min-width: 38px;
+  text-align: center;
 }
 
 .presentation-canvas-stack {
@@ -556,8 +654,20 @@ button:disabled {
   }
 
   .teacher-code-editor-frame {
+    min-height: 180px;
+  }
+
+  .teacher-shared-editor {
     height: calc(100dvh - 156px);
-    min-height: 320px;
+  }
+
+  .student-feedback-controls {
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+
+  .student-feedback-controls input {
+    flex-basis: 100%;
   }
 
   .shared-workspace {

@@ -1,7 +1,26 @@
 import Editor from "@monaco-editor/react";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 
 const SYMBOLS = ["()", "[]", "{}", ":", '"', "'", "=", "_", "#"];
+
+const getFeedbackDecorations = (line) =>
+  Number.isInteger(line)
+    ? [
+        {
+          range: {
+            startLineNumber: line,
+            startColumn: 1,
+            endLineNumber: line,
+            endColumn: 1,
+          },
+          options: {
+            isWholeLine: true,
+            className: "teacher-feedback-line",
+            glyphMarginClassName: "teacher-feedback-glyph",
+          },
+        },
+      ]
+    : [];
 
 function CodeEditor({
   code,
@@ -9,8 +28,19 @@ function CodeEditor({
   readOnly = false,
   height = "100%",
   mobileToolbar = false,
+  highlightedLine,
+  onCursorLineChange,
 }) {
   const editorRef = useRef();
+  const decorationsRef = useRef();
+
+  useEffect(() => {
+    if (!editorRef.current) {
+      return;
+    }
+
+    decorationsRef.current?.set(getFeedbackDecorations(highlightedLine));
+  }, [highlightedLine]);
 
   const handleChange = (value) => {
     onChange?.(value ?? "");
@@ -63,6 +93,13 @@ function CodeEditor({
           onChange={handleChange}
           onMount={(editor) => {
             editorRef.current = editor;
+            decorationsRef.current = editor.createDecorationsCollection();
+            decorationsRef.current.set(
+              getFeedbackDecorations(highlightedLine),
+            );
+            editor.onDidChangeCursorPosition(({ position }) => {
+              onCursorLineChange?.(position.lineNumber);
+            });
           }}
           options={{
             automaticLayout: true,
@@ -70,6 +107,15 @@ function CodeEditor({
             minimap: { enabled: false },
             readOnly,
             scrollBeyondLastLine: false,
+            smoothScrolling: true,
+            glyphMargin: Boolean(highlightedLine),
+            scrollbar: {
+              vertical: "visible",
+              horizontal: "visible",
+              verticalScrollbarSize: 12,
+              horizontalScrollbarSize: 12,
+              alwaysConsumeMouseWheel: false,
+            },
           }}
         />
       </div>

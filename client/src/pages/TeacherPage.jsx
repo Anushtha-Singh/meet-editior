@@ -2,8 +2,10 @@ import { useCallback, useEffect, useState } from "react";
 import CodeEditor from "../components/CodeEditor";
 import OutputPanel from "../components/OutputPanel";
 import PresentationViewer from "../components/PresentationViewer";
+import StudentMonitorCard from "../components/StudentMonitorCard";
 import useSharedClassroom from "../hooks/useSharedClassroom";
 import useSocketStatus from "../hooks/useSocketStatus";
+import { preparePython, runPython } from "../services/pythonRunner";
 import socket from "../services/socket";
 
 const MAX_PDF_SIZE = 8 * 1024 * 1024;
@@ -14,6 +16,10 @@ function TeacherPage() {
   const [annotationTool, setAnnotationTool] = useState("pen");
   const [annotationColor, setAnnotationColor] = useState("#ef4444");
   const [uploadError, setUploadError] = useState("");
+  const [teacherOutput, setTeacherOutput] = useState("");
+  const [teacherRunError, setTeacherRunError] = useState("");
+  const [isTeacherRunning, setIsTeacherRunning] = useState(false);
+  const [pythonStatus, setPythonStatus] = useState("loading");
   const isConnected = useSocketStatus();
   const { teacherCode, setTeacherCode, presentation } = useSharedClassroom();
 
@@ -36,6 +42,13 @@ function TeacherPage() {
         ),
       );
     };
+    const handleFeedbackUpdate = ({ socketId, feedback } = {}) => {
+      setStudents((currentStudents) =>
+        currentStudents.map((student) =>
+          student.socketId === socketId ? { ...student, feedback } : student,
+        ),
+      );
+    };
 
     if (socket.connected) {
       joinAsTeacher();
@@ -44,19 +57,57 @@ function TeacherPage() {
     socket.on("connect", joinAsTeacher);
     socket.on("code-update", handleCodeUpdate);
     socket.on("execution-update", handleExecutionUpdate);
+    socket.on("student-feedback-update", handleFeedbackUpdate);
     socket.on("students-update", handleStudentsUpdate);
 
     return () => {
       socket.off("connect", joinAsTeacher);
       socket.off("code-update", handleCodeUpdate);
       socket.off("execution-update", handleExecutionUpdate);
+      socket.off("student-feedback-update", handleFeedbackUpdate);
       socket.off("students-update", handleStudentsUpdate);
+    };
+  }, []);
+
+  useEffect(() => {
+    let isActive = true;
+
+    preparePython()
+      .then(() => {
+        if (isActive) {
+          setPythonStatus("ready");
+        }
+      })
+      .catch(() => {
+        if (isActive) {
+          setPythonStatus("error");
+        }
+      });
+
+    return () => {
+      isActive = false;
     };
   }, []);
 
   const handleTeacherCodeChange = (code) => {
     setTeacherCode(code);
     socket.emit("teacher-code-change", code);
+  };
+
+  const handleTeacherRun = async () => {
+    setIsTeacherRunning(true);
+    setTeacherOutput("");
+    setTeacherRunError("");
+
+    try {
+      const result = await runPython(teacherCode);
+      setTeacherOutput(result.output || "Program finished with no output.");
+      setTeacherRunError(result.error || "");
+    } catch (error) {
+      setTeacherRunError(error.message || "Unable to execute Python.");
+    } finally {
+      setIsTeacherRunning(false);
+    }
   };
 
   const handlePdfUpload = (event) => {
@@ -145,23 +196,7 @@ function TeacherPage() {
         ) : (
           <section className="student-grid">
             {students.map((student) => (
-              <article className="student-card" key={student.socketId}>
-                <div className="student-card-header">
-                  <strong>{student.name}</strong>
-                  <span title={student.socketId}>
-                    #{student.socketId.slice(0, 6)}
-                  </span>
-                </div>
-                <div className="teacher-editor">
-                  <CodeEditor code={student.code} readOnly />
-                </div>
-                <OutputPanel
-                  output={student.execution?.output}
-                  error={student.execution?.error}
-                  status={student.execution?.status}
-                  compact
-                />
-              </article>
+              <StudentMonitorCard student={student} key={student.socketId} />
             ))}
           </section>
         ))}
@@ -179,6 +214,33 @@ function TeacherPage() {
               mobileToolbar
             />
           </div>
+          <OutputPanel
+            output={teacherOutput}
+            error={teacherRunError}
+            status={
+              isTeacherRunning
+                ? "running"
+                : teacherOutput || teacherRunError
+                  ? "completed"
+                  : "idle"
+            }
+            runtimeStatus={pythonStatus}
+            resizable
+          />
+          <footer className="app-footer">
+            <button
+              type="button"
+              disabled={isTeacherRunning || pythonStatus === "loading"}
+              onClick={handleTeacherRun}
+            >
+              {isTeacherRunning
+                ? "Running..."
+                : pythonStatus === "loading"
+                  ? "Preparing Python..."
+                  : "▶ Run Code"}
+            </button>
+            <span>Teacher Python preview</span>
+          </footer>
         </section>
       )}
 

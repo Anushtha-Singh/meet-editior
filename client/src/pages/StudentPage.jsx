@@ -19,6 +19,9 @@ function StudentPage() {
   const [isRunning, setIsRunning] = useState(false);
   const [pythonStatus, setPythonStatus] = useState("loading");
   const [activeTab, setActiveTab] = useState("code");
+  const [teacherFeedback, setTeacherFeedback] = useState(null);
+  const [teacherEditNotice, setTeacherEditNotice] = useState("");
+  const [pdfZoom, setPdfZoom] = useState(1);
   const codeRef = useRef(code);
   const isConnected = useSocketStatus();
   const emitCodeChange = useCodeSync();
@@ -44,6 +47,22 @@ function StudentPage() {
       socket.off("connect", joinClass);
     };
   }, [studentName]);
+
+  useEffect(() => {
+    const handleTeacherCodeReplace = (nextCode) => {
+      codeRef.current = nextCode;
+      setCode(nextCode);
+      setTeacherEditNotice("Your teacher updated your code.");
+    };
+
+    socket.on("teacher-code-replace", handleTeacherCodeReplace);
+    socket.on("student-feedback", setTeacherFeedback);
+
+    return () => {
+      socket.off("teacher-code-replace", handleTeacherCodeReplace);
+      socket.off("student-feedback", setTeacherFeedback);
+    };
+  }, []);
 
   useEffect(() => {
     if (!studentName) {
@@ -184,10 +203,33 @@ function StudentPage() {
 
       {activeTab === "code" && (
         <div className="student-workspace">
+          {(teacherFeedback || teacherEditNotice) && (
+            <div className="teacher-feedback-banner">
+              <div>
+                {teacherFeedback && (
+                  <strong>
+                    Teacher note on line {teacherFeedback.line}: {" "}
+                    {teacherFeedback.message}
+                  </strong>
+                )}
+                {teacherEditNotice && <span>{teacherEditNotice}</span>}
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setTeacherFeedback(null);
+                  setTeacherEditNotice("");
+                }}
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
           <section className="student-editor">
             <CodeEditor
               code={code}
               onChange={handleCodeChange}
+              highlightedLine={teacherFeedback?.line}
               mobileToolbar
             />
           </section>
@@ -238,13 +280,32 @@ function StudentPage() {
         <section className="shared-workspace">
           <div className="shared-workspace-title">
             <strong>{presentation.name || "Class presentation"}</strong>
-            <span>
-              {presentation.pageCount
-                ? `Page ${presentation.page} of ${presentation.pageCount}`
-                : "Waiting for PDF"}
-            </span>
+            <div className="presentation-zoom-controls">
+              <span>
+                {presentation.pageCount
+                  ? `Page ${presentation.page} of ${presentation.pageCount}`
+                  : "Waiting for PDF"}
+              </span>
+              <button
+                type="button"
+                disabled={pdfZoom <= 1}
+                onClick={() => setPdfZoom((current) => Math.max(current - 0.25, 1))}
+              >
+                −
+              </button>
+              <strong>{Math.round(pdfZoom * 100)}%</strong>
+              <button
+                type="button"
+                disabled={pdfZoom >= 2.5}
+                onClick={() =>
+                  setPdfZoom((current) => Math.min(current + 0.25, 2.5))
+                }
+              >
+                +
+              </button>
+            </div>
           </div>
-          <PresentationViewer presentation={presentation} />
+          <PresentationViewer presentation={presentation} zoom={pdfZoom} />
         </section>
       )}
     </main>
