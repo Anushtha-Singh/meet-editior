@@ -262,6 +262,7 @@ function StudentPage() {
             <CodeEditor
               code={teacherCode || "# Waiting for the teacher to type..."}
               readOnly
+              remoteUpdates
             />
           </div>
           <OutputPanel

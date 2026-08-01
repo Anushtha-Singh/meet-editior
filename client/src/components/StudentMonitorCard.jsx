@@ -38,6 +38,7 @@ function StudentMonitorCard({ student }) {
         <CodeEditor
           code={student.code}
           readOnly
+          remoteUpdates
           highlightedLine={student.feedback?.line}
           onCursorLineChange={setSelectedLine}
         />

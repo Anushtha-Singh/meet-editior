@@ -22,6 +22,56 @@ const getFeedbackDecorations = (line) =>
       ]
     : [];
 
+const applyRemoteCode = (editor, nextCode) => {
+  const model = editor?.getModel();
+
+  if (!model) {
+    return;
+  }
+
+  const currentCode = model.getValue();
+
+  if (currentCode === nextCode) {
+    return;
+  }
+
+  let prefixLength = 0;
+  const sharedLength = Math.min(currentCode.length, nextCode.length);
+
+  while (
+    prefixLength < sharedLength &&
+    currentCode[prefixLength] === nextCode[prefixLength]
+  ) {
+    prefixLength += 1;
+  }
+
+  let suffixLength = 0;
+
+  while (
+    suffixLength < sharedLength - prefixLength &&
+    currentCode[currentCode.length - 1 - suffixLength] ===
+      nextCode[nextCode.length - 1 - suffixLength]
+  ) {
+    suffixLength += 1;
+  }
+
+  const start = model.getPositionAt(prefixLength);
+  const end = model.getPositionAt(currentCode.length - suffixLength);
+  const replacement = nextCode.slice(prefixLength, nextCode.length - suffixLength);
+
+  model.applyEdits([
+    {
+      range: {
+        startLineNumber: start.lineNumber,
+        startColumn: start.column,
+        endLineNumber: end.lineNumber,
+        endColumn: end.column,
+      },
+      text: replacement,
+    },
+  ]);
+};
+
 function CodeEditor({
   code,
   onChange,
@@ -30,6 +80,7 @@ function CodeEditor({
   mobileToolbar = false,
   highlightedLine,
   onCursorLineChange,
+  remoteUpdates = false,
 }) {
   const editorRef = useRef();
   const decorationsRef = useRef();
@@ -60,6 +111,12 @@ function CodeEditor({
 
     decorationsRef.current?.set(getFeedbackDecorations(highlightedLine));
   }, [highlightedLine]);
+
+  useEffect(() => {
+    if (remoteUpdates) {
+      applyRemoteCode(editorRef.current, code);
+    }
+  }, [code, remoteUpdates]);
 
   const handleChange = (value) => {
     onChange?.(value ?? "");
@@ -108,10 +165,14 @@ function CodeEditor({
           height="100%"
           language="python"
           theme="vs-dark"
-          value={code}
+          value={remoteUpdates ? undefined : code}
+          defaultValue={remoteUpdates ? code : undefined}
           onChange={handleChange}
           onMount={(editor) => {
             editorRef.current = editor;
+            if (remoteUpdates) {
+              applyRemoteCode(editor, code);
+            }
             decorationsRef.current = editor.createDecorationsCollection();
             decorationsRef.current.set(
               getFeedbackDecorations(highlightedLine),
