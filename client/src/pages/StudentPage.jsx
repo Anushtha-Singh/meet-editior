@@ -22,10 +22,15 @@ function StudentPage() {
   const [teacherFeedback, setTeacherFeedback] = useState(null);
   const [teacherEditNotice, setTeacherEditNotice] = useState("");
   const [pdfZoom, setPdfZoom] = useState(1);
+  const [studentPdfPage, setStudentPdfPage] = useState(null);
   const codeRef = useRef(code);
   const isConnected = useSocketStatus();
   const emitCodeChange = useCodeSync();
   const { teacherCode, presentation } = useSharedClassroom();
+  const displayedPdfPage = presentation.pageCount
+    ? Math.min(studentPdfPage ?? presentation.page, presentation.pageCount)
+    : 1;
+  const isFollowingTeacher = studentPdfPage === null;
 
   useEffect(() => {
     if (!studentName) {
@@ -283,9 +288,42 @@ function StudentPage() {
             <div className="presentation-zoom-controls">
               <span>
                 {presentation.pageCount
-                  ? `Page ${presentation.page} of ${presentation.pageCount}`
+                  ? `Page ${displayedPdfPage} of ${presentation.pageCount}`
                   : "Waiting for PDF"}
               </span>
+              <button
+                type="button"
+                aria-label="Previous PDF page"
+                disabled={!presentation.pageCount || displayedPdfPage <= 1}
+                onClick={() =>
+                  setStudentPdfPage(Math.max(displayedPdfPage - 1, 1))
+                }
+              >
+                ‹
+              </button>
+              <button
+                type="button"
+                aria-label="Next PDF page"
+                disabled={
+                  !presentation.pageCount ||
+                  displayedPdfPage >= presentation.pageCount
+                }
+                onClick={() =>
+                  setStudentPdfPage(
+                    Math.min(displayedPdfPage + 1, presentation.pageCount),
+                  )
+                }
+              >
+                ›
+              </button>
+              <button
+                className="follow-teacher-button"
+                type="button"
+                disabled={isFollowingTeacher}
+                onClick={() => setStudentPdfPage(null)}
+              >
+                {isFollowingTeacher ? "Following" : "Follow teacher"}
+              </button>
               <button
                 type="button"
                 disabled={pdfZoom <= 1}
@@ -305,7 +343,10 @@ function StudentPage() {
               </button>
             </div>
           </div>
-          <PresentationViewer presentation={presentation} zoom={pdfZoom} />
+          <PresentationViewer
+            presentation={{ ...presentation, page: displayedPdfPage }}
+            zoom={pdfZoom}
+          />
         </section>
       )}
     </main>

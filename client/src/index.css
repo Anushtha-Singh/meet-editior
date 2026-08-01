@@ -569,6 +569,11 @@ button:disabled {
   padding: 5px 8px;
 }
 
+.presentation-zoom-controls .follow-teacher-button {
+  font-size: 11px;
+  min-width: 76px;
+}
+
 .presentation-zoom-controls strong {
   color: #cbd5e1;
   font-size: 12px;
