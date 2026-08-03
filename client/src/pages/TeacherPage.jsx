@@ -17,6 +17,7 @@ function TeacherPage() {
   const [annotationColor, setAnnotationColor] = useState("#ef4444");
   const [uploadError, setUploadError] = useState("");
   const [isTeacherRunning, setIsTeacherRunning] = useState(false);
+  const [localTeacherExecution, setLocalTeacherExecution] = useState(null);
   const [pythonStatus, setPythonStatus] = useState("loading");
   const isConnected = useSocketStatus();
   const { teacherCode, setTeacherCode, teacherExecution, presentation } =
@@ -95,6 +96,11 @@ function TeacherPage() {
 
   const handleTeacherRun = async () => {
     setIsTeacherRunning(true);
+    setLocalTeacherExecution({
+      status: "running",
+      output: "",
+      error: "",
+    });
     socket.emit("teacher-execution-change", {
       status: "running",
       output: "",
@@ -105,6 +111,11 @@ function TeacherPage() {
       const result = await runPython(teacherCode);
       const nextOutput = result.output || "Program finished with no output.";
       const nextError = result.error || "";
+      setLocalTeacherExecution({
+        status: "completed",
+        output: nextOutput,
+        error: nextError,
+      });
       socket.emit("teacher-execution-change", {
         status: "completed",
         output: nextOutput,
@@ -112,6 +123,11 @@ function TeacherPage() {
       });
     } catch (error) {
       const message = error.message || "Unable to execute Python.";
+      setLocalTeacherExecution({
+        status: "completed",
+        output: "",
+        error: message,
+      });
       socket.emit("teacher-execution-change", {
         status: "completed",
         output: "",
@@ -227,9 +243,13 @@ function TeacherPage() {
             />
           </div>
           <OutputPanel
-            output={teacherExecution.output}
-            error={teacherExecution.error}
-            status={isTeacherRunning ? "running" : teacherExecution.status}
+            output={(localTeacherExecution ?? teacherExecution).output}
+            error={(localTeacherExecution ?? teacherExecution).error}
+            status={
+              isTeacherRunning
+                ? "running"
+                : (localTeacherExecution ?? teacherExecution).status
+            }
             runtimeStatus={pythonStatus}
             resizable
           />

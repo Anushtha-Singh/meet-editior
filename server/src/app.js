@@ -16,7 +16,10 @@ app.get("/", (req, res) => {
 });
 
 app.get("/health", (req, res) => {
-    res.json({ status: "ok" });
+    res.json({
+        status: "ok",
+        realtimeProtocol: 2,
+    });
 });
 
 module.exports = app;
