@@ -81,6 +81,7 @@ function CodeEditor({
   highlightedLine,
   onCursorLineChange,
   remoteUpdates = false,
+  language = "python",
 }) {
   const editorRef = useRef();
   const decorationsRef = useRef();
@@ -163,7 +164,7 @@ function CodeEditor({
       <div className="monaco-container">
         <Editor
           height="100%"
-          language="python"
+          language={language}
           theme="vs-dark"
           value={remoteUpdates ? undefined : code}
           defaultValue={remoteUpdates ? code : undefined}

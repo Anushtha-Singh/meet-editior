@@ -5,19 +5,26 @@ import PresentationViewer from "../components/PresentationViewer";
 import useCodeSync from "../hooks/useCodeSync";
 import useSharedClassroom from "../hooks/useSharedClassroom";
 import useSocketStatus from "../hooks/useSocketStatus";
+import { runC } from "../services/cRunner";
 import { preparePython, runPython } from "../services/pythonRunner";
 import socket from "../services/socket";
 
-const STARTER_CODE = 'print("Hello, Student!")';
+const STARTER_CODE = {
+  python: 'print("Hello, Student!")',
+  c: '#include <stdio.h>\n\nint main() {\n  printf("Hello, Student!\\n");\n  return 0;\n}',
+};
 
 function StudentPage() {
   const [nameInput, setNameInput] = useState("");
   const [studentName, setStudentName] = useState("");
-  const [code, setCode] = useState(STARTER_CODE);
+  const [language, setLanguage] = useState("python");
+  const [codeByLanguage, setCodeByLanguage] = useState(STARTER_CODE);
+  const code = codeByLanguage[language];
   const [output, setOutput] = useState("");
   const [runError, setRunError] = useState("");
   const [isRunning, setIsRunning] = useState(false);
   const [pythonStatus, setPythonStatus] = useState("loading");
+  const [cStatus, setCStatus] = useState("ready");
   const [activeTab, setActiveTab] = useState("code");
   const [teacherFeedback, setTeacherFeedback] = useState(null);
   const [studentPdfPage, setStudentPdfPage] = useState(null);
@@ -94,8 +101,15 @@ function StudentPage() {
 
   const handleCodeChange = (nextCode) => {
     codeRef.current = nextCode;
-    setCode(nextCode);
+    setCodeByLanguage((current) => ({ ...current, [language]: nextCode }));
     emitCodeChange(nextCode);
+  };
+
+  const handleLanguageChange = (nextLanguage) => {
+    setLanguage(nextLanguage);
+    setOutput("");
+    setRunError("");
+    codeRef.current = codeByLanguage[nextLanguage];
   };
 
   const handleRun = async () => {
@@ -109,7 +123,10 @@ function StudentPage() {
     });
 
     try {
-      const result = await runPython(code);
+      const result =
+        language === "c"
+          ? await runC(code)
+          : await runPython(code);
       const nextOutput = result.output || "Program finished with no output.";
       const nextError = result.error || "";
 
@@ -121,7 +138,9 @@ function StudentPage() {
         error: nextError,
       });
     } catch (error) {
-      const message = error.message || "Unable to execute Python.";
+      const message =
+        error.message ||
+        `Unable to execute ${language === "c" ? "C" : "Python"}.`;
 
       setRunError(message);
       socket.emit("execution-change", {
@@ -138,7 +157,7 @@ function StudentPage() {
     return (
       <main className="join-page">
         <form className="join-card" onSubmit={handleJoin}>
-          <p className="eyebrow">Python Classroom</p>
+          <p className="eyebrow">Code Classroom</p>
           <h1>Join your class</h1>
           <label htmlFor="student-name">Your name</label>
           <input
@@ -164,7 +183,7 @@ function StudentPage() {
     <main className="student-page">
       <header className="app-header">
         <div>
-          <p className="eyebrow">Python Classroom</p>
+          <p className="eyebrow">Code Classroom</p>
           <h1>Student Editor</h1>
         </div>
         <span className={`connection ${isConnected ? "online" : ""}`}>
@@ -217,8 +236,20 @@ function StudentPage() {
             </div>
           )}
           <section className="student-editor">
+            <div className="editor-toolbar-inline">
+              <label htmlFor="student-language">Language</label>
+              <select
+                id="student-language"
+                value={language}
+                onChange={(event) => handleLanguageChange(event.target.value)}
+              >
+                <option value="python">Python</option>
+                <option value="c">C</option>
+              </select>
+            </div>
             <CodeEditor
               code={code}
+              language={language}
               onChange={handleCodeChange}
               highlightedLine={teacherFeedback?.line}
               mobileToolbar
@@ -231,7 +262,8 @@ function StudentPage() {
             status={
               isRunning ? "running" : output || runError ? "completed" : "idle"
             }
-            runtimeStatus={pythonStatus}
+            runtimeStatus={language === "c" ? cStatus : pythonStatus}
+            language={language === "c" ? "C" : "Python"}
             resizable
           />
 
@@ -239,15 +271,20 @@ function StudentPage() {
             <button
               type="button"
               onClick={handleRun}
-              disabled={isRunning || pythonStatus === "loading"}
+              disabled={
+                isRunning ||
+                (language === "python" && pythonStatus === "loading")
+              }
             >
               {isRunning
                 ? "Running..."
-                : pythonStatus === "loading"
+                : language === "python" && pythonStatus === "loading"
                   ? "Preparing Python..."
                   : "▶ Run Code"}
             </button>
-            <span>Python 3 · Browser runtime</span>
+            <span>
+              {language === "c" ? "C · GCC runtime" : "Python 3 · Browser runtime"}
+            </span>
           </footer>
         </div>
       )}

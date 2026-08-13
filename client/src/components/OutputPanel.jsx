@@ -9,22 +9,23 @@ function OutputPanel({
   runtimeStatus,
   compact = false,
   resizable = false,
+  language = "Python",
 }) {
   const [height, setHeight] = useState(140);
   const panelRef = useRef();
   const dragStartRef = useRef();
   const statusLabel =
     status === "running"
-      ? "Running Python..."
+      ? `Running ${language}...`
       : status === "completed"
         ? "Finished"
       : runtimeStatus === "ready"
-        ? "Python ready"
-        : runtimeStatus === "error"
-          ? "Runtime unavailable"
-          : runtimeStatus === "loading"
-            ? "Preparing Python..."
-            : "Not run yet";
+          ? `${language} ready`
+          : runtimeStatus === "error"
+            ? "Runtime unavailable"
+            : runtimeStatus === "loading"
+              ? `Preparing ${language}...`
+              : "Not run yet";
 
   const content = error
     ? [output, error].filter(Boolean).join("\n")

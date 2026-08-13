@@ -5,6 +5,7 @@ import PresentationViewer from "../components/PresentationViewer";
 import StudentMonitorCard from "../components/StudentMonitorCard";
 import useSharedClassroom from "../hooks/useSharedClassroom";
 import useSocketStatus from "../hooks/useSocketStatus";
+import { runC } from "../services/cRunner";
 import { preparePython, runPython } from "../services/pythonRunner";
 import socket from "../services/socket";
 
@@ -19,6 +20,8 @@ function TeacherPage() {
   const [isTeacherRunning, setIsTeacherRunning] = useState(false);
   const [localTeacherExecution, setLocalTeacherExecution] = useState(null);
   const [pythonStatus, setPythonStatus] = useState("loading");
+  const [cStatus, setCStatus] = useState("ready");
+  const [language, setLanguage] = useState("python");
   const isConnected = useSocketStatus();
   const { teacherCode, setTeacherCode, teacherExecution, presentation } =
     useSharedClassroom();
@@ -94,6 +97,13 @@ function TeacherPage() {
     socket.emit("teacher-code-change", code);
   };
 
+  const handleLanguageChange = (nextLanguage) => {
+    setLanguage(nextLanguage);
+    if (nextLanguage === "c") {
+      setCStatus("ready");
+    }
+  };
+
   const handleTeacherRun = async () => {
     setIsTeacherRunning(true);
     setLocalTeacherExecution({
@@ -108,7 +118,10 @@ function TeacherPage() {
     });
 
     try {
-      const result = await runPython(teacherCode);
+      const result =
+        language === "c"
+          ? await runC(teacherCode)
+          : await runPython(teacherCode);
       const nextOutput = result.output || "Program finished with no output.";
       const nextError = result.error || "";
       setLocalTeacherExecution({
@@ -122,7 +135,9 @@ function TeacherPage() {
         error: nextError,
       });
     } catch (error) {
-      const message = error.message || "Unable to execute Python.";
+      const message =
+        error.message ||
+        `Unable to execute ${language === "c" ? "C" : "Python"}.`;
       setLocalTeacherExecution({
         status: "completed",
         output: "",
@@ -180,7 +195,7 @@ function TeacherPage() {
     <main className="teacher-page">
       <header className="app-header teacher-header">
         <div>
-          <p className="eyebrow">Python Classroom</p>
+          <p className="eyebrow">Code Classroom</p>
           <h1>Teacher Dashboard</h1>
         </div>
         <div className="teacher-stats">
@@ -236,8 +251,20 @@ function TeacherPage() {
             <span>Updates live</span>
           </div>
           <div className="teacher-code-editor-frame">
+            <div className="editor-toolbar-inline">
+              <label htmlFor="teacher-language">Language</label>
+              <select
+                id="teacher-language"
+                value={language}
+                onChange={(event) => handleLanguageChange(event.target.value)}
+              >
+                <option value="python">Python</option>
+                <option value="c">C</option>
+              </select>
+            </div>
             <CodeEditor
               code={teacherCode}
+              language={language}
               onChange={handleTeacherCodeChange}
               mobileToolbar
             />
@@ -250,22 +277,28 @@ function TeacherPage() {
                 ? "running"
                 : (localTeacherExecution ?? teacherExecution).status
             }
-            runtimeStatus={pythonStatus}
+            runtimeStatus={language === "c" ? cStatus : pythonStatus}
+            language={language === "c" ? "C" : "Python"}
             resizable
           />
           <footer className="app-footer">
             <button
               type="button"
-              disabled={isTeacherRunning || pythonStatus === "loading"}
+              disabled={
+                isTeacherRunning ||
+                (language === "python" && pythonStatus === "loading")
+              }
               onClick={handleTeacherRun}
             >
               {isTeacherRunning
                 ? "Running..."
-                : pythonStatus === "loading"
+                : language === "python" && pythonStatus === "loading"
                   ? "Preparing Python..."
                   : "▶ Run Code"}
             </button>
-            <span>Teacher Python preview</span>
+            <span>
+              {language === "c" ? "Teacher C preview" : "Teacher Python preview"}
+            </span>
           </footer>
         </section>
       )}
