@@ -442,6 +442,7 @@ button:disabled {
   border-bottom: 1px solid #283247;
   color: #cbd5e1;
   display: flex;
+  gap: 12px;
   justify-content: space-between;
   padding: 10px 16px;
 }
@@ -449,6 +450,46 @@ button:disabled {
 .shared-workspace-title span {
   color: #8ba7ff;
   font-size: 12px;
+}
+
+.editor-language-picker {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.editor-language-picker label {
+  color: #94a3b8;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.language-select {
+  appearance: none;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 7px;
+  color: #e2e8f0;
+  font-size: 12px;
+  min-width: 92px;
+  padding: 6px 28px 6px 10px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, #8ba7ff 50%),
+    linear-gradient(135deg, #8ba7ff 50%, transparent 50%);
+  background-position:
+    calc(100% - 16px) calc(50% - 2px),
+    calc(100% - 11px) calc(50% - 2px);
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+
+.editor-language-picker-inline {
+  justify-content: flex-end;
+  margin: 0 0 8px;
+  padding: 8px 12px 0;
 }
 
 .shared-editor {

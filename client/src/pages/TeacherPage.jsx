@@ -248,13 +248,11 @@ function TeacherPage() {
         <section className="teacher-shared-editor">
           <div className="shared-workspace-title">
             <strong>Code shared with every student</strong>
-            <span>Updates live</span>
-          </div>
-          <div className="teacher-code-editor-frame">
-            <div className="editor-toolbar-inline">
+            <div className="editor-language-picker">
               <label htmlFor="teacher-language">Language</label>
               <select
                 id="teacher-language"
+                className="language-select"
                 value={language}
                 onChange={(event) => handleLanguageChange(event.target.value)}
               >
@@ -262,6 +260,9 @@ function TeacherPage() {
                 <option value="c">C</option>
               </select>
             </div>
+            <span>Updates live</span>
+          </div>
+          <div className="teacher-code-editor-frame">
             <CodeEditor
               code={teacherCode}
               language={language}

@@ -236,10 +236,11 @@ function StudentPage() {
             </div>
           )}
           <section className="student-editor">
-            <div className="editor-toolbar-inline">
+            <div className="editor-language-picker editor-language-picker-inline">
               <label htmlFor="student-language">Language</label>
               <select
                 id="student-language"
+                className="language-select"
                 value={language}
                 onChange={(event) => handleLanguageChange(event.target.value)}
               >
