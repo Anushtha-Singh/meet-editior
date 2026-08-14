@@ -160,8 +160,16 @@ function StudentPage() {
         language === "c"
           ? await runC(code)
           : await runPython(code, projectFiles);
-      const nextOutput = result.output || "Program finished with no output.";
-      const nextError = result.error || "";
+      const nextOutput =
+        typeof result.output === "string"
+          ? result.output || "Program finished with no output."
+          : String(result.output ?? "Program finished with no output.");
+      const nextError =
+        typeof result.error === "string"
+          ? result.error
+          : result.error && typeof result.error.message === "string"
+            ? result.error.message
+            : String(result.error ?? "");
 
       setOutput(nextOutput);
       setRunError(nextError);
@@ -172,8 +180,9 @@ function StudentPage() {
       });
     } catch (error) {
       const message =
-        error.message ||
-        `Unable to execute ${language === "c" ? "C" : "Python"}.`;
+        error && typeof error.message === "string"
+          ? error.message
+          : String(error ?? `Unable to execute ${language === "c" ? "C" : "Python"}.`);
 
       setRunError(message);
       socket.emit("execution-change", {
@@ -197,6 +206,47 @@ function StudentPage() {
       [fileName]: "",
     }));
     setActiveFileName(fileName);
+  };
+
+  const handleRenameFile = () => {
+    const nextName = window.prompt("Rename file", activeFileName);
+
+    if (!nextName) {
+      return;
+    }
+
+    const cleanName = nextName.trim();
+
+    if (!cleanName || cleanName === activeFileName) {
+      return;
+    }
+
+    if (projectFiles[cleanName]) {
+      setRunError("A file with that name already exists.");
+      return;
+    }
+
+    setProjectFiles((current) => {
+      const nextFiles = { ...current };
+      nextFiles[cleanName] = nextFiles[activeFileName];
+      delete nextFiles[activeFileName];
+      return nextFiles;
+    });
+    setActiveFileName(cleanName);
+  };
+
+  const handleDeleteFile = () => {
+    if (Object.keys(projectFiles).length <= 1) {
+      setRunError("Keep at least one file in the project.");
+      return;
+    }
+
+    const nextFiles = { ...projectFiles };
+    delete nextFiles[activeFileName];
+    const remaining = Object.keys(nextFiles);
+
+    setProjectFiles(nextFiles);
+    setActiveFileName(remaining[0]);
   };
 
   if (!studentName) {
@@ -303,6 +353,17 @@ function StudentPage() {
                       {fileName}
                     </button>
                   ))}
+                </div>
+                <div className="file-toolbar">
+                  <button type="button" onClick={handleRenameFile}>
+                    Rename
+                  </button>
+                  <button type="button" onClick={handleDeleteFile}>
+                    Delete
+                  </button>
+                  <button type="button" onClick={handleRun}>
+                    Run this file
+                  </button>
                 </div>
               </div>
 

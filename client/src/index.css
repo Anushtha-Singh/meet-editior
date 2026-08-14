@@ -150,6 +150,20 @@ button:disabled {
   padding: 8px;
 }
 
+.file-toolbar {
+  border-top: 1px solid #283247;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+}
+
+.file-toolbar button {
+  background: #26324a;
+  font-size: 12px;
+  padding: 8px 10px;
+}
+
 .file-item {
   background: transparent;
   border: 1px solid transparent;
