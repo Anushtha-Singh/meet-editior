@@ -119,6 +119,10 @@ button:disabled {
   min-height: 0;
 }
 
+.student-file-panel.sidebar-collapsed {
+  gap: 0;
+}
+
 .file-sidebar {
   background: #101827;
   border-right: 1px solid #283247;
@@ -126,6 +130,30 @@ button:disabled {
   flex: 0 0 200px;
   flex-direction: column;
   min-height: 0;
+}
+
+.file-sidebar-actions {
+  align-items: center;
+  display: flex;
+  gap: 6px;
+}
+
+.icon-button {
+  background: #26324a;
+  min-width: 32px;
+  padding: 6px 8px;
+}
+
+.sidebar-toggle-button {
+  background: #101827;
+  border: 1px solid #283247;
+  border-radius: 0 8px 8px 0;
+  color: #dbeafe;
+  flex: 0 0 auto;
+  min-width: 52px;
+  padding: 10px 8px;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
 }
 
 .file-sidebar-header {

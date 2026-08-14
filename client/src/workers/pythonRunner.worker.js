@@ -34,8 +34,13 @@ self.onmessage = async ({ data: { id, type, code, input: inputValues = [], files
 
     const inputQueue = [...(Array.isArray(inputValues) ? inputValues : [])];
 
-    pyodide.FS.mkdir("/workspace");
-    pyodide.FS.chdir("/workspace");
+    const workspacePath = "/workspace";
+
+    if (!pyodide.FS.analyzePath(workspacePath).exists) {
+      pyodide.FS.mkdir(workspacePath);
+    }
+
+    pyodide.FS.chdir(workspacePath);
 
     if (!pyodide.FS.analyzePath("/workspace/data.txt").exists) {
       pyodide.FS.writeFile(

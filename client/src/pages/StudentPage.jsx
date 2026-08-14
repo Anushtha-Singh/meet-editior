@@ -25,6 +25,7 @@ function StudentPage() {
   const [language, setLanguage] = useState("python");
   const [projectFiles, setProjectFiles] = useState(DEFAULT_PROJECT_FILES);
   const [activeFileName, setActiveFileName] = useState("data.txt");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const code = projectFiles[activeFileName] ?? "";
   const [output, setOutput] = useState("");
   const [runError, setRunError] = useState("");
@@ -330,40 +331,63 @@ function StudentPage() {
             </div>
           )}
           <section className="student-editor">
-            <div className="student-file-panel">
-              <div className="file-sidebar">
-                <div className="file-sidebar-header">
-                  <strong>Files</strong>
-                  <button type="button" onClick={handleCreateFile}>
-                    + New
-                  </button>
-                </div>
-                <div className="file-list">
-                  {Object.keys(projectFiles).map((fileName) => (
-                    <button
-                      key={fileName}
-                      type="button"
-                      className={
-                        activeFileName === fileName ? "file-item active" : "file-item"
-                      }
-                      onClick={() => setActiveFileName(fileName)}
-                    >
-                      {fileName}
+            <div className={`student-file-panel ${isSidebarOpen ? "" : "sidebar-collapsed"}`}>
+              {isSidebarOpen && (
+                <div className="file-sidebar">
+                  <div className="file-sidebar-header">
+                    <strong>Files</strong>
+                    <div className="file-sidebar-actions">
+                      <button type="button" onClick={handleCreateFile}>
+                        + New
+                      </button>
+                      <button
+                        type="button"
+                        className="icon-button"
+                        aria-label="Hide files panel"
+                        onClick={() => setIsSidebarOpen(false)}
+                      >
+                        ‹
+                      </button>
+                    </div>
+                  </div>
+                  <div className="file-list">
+                    {Object.keys(projectFiles).map((fileName) => (
+                      <button
+                        key={fileName}
+                        type="button"
+                        className={
+                          activeFileName === fileName ? "file-item active" : "file-item"
+                        }
+                        onClick={() => setActiveFileName(fileName)}
+                      >
+                        {fileName}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="file-toolbar">
+                    <button type="button" onClick={handleRenameFile}>
+                      Rename
                     </button>
-                  ))}
+                    <button type="button" onClick={handleDeleteFile}>
+                      Delete
+                    </button>
+                    <button type="button" onClick={handleRun}>
+                      Run this file
+                    </button>
+                  </div>
                 </div>
-                <div className="file-toolbar">
-                  <button type="button" onClick={handleRenameFile}>
-                    Rename
-                  </button>
-                  <button type="button" onClick={handleDeleteFile}>
-                    Delete
-                  </button>
-                  <button type="button" onClick={handleRun}>
-                    Run this file
-                  </button>
-                </div>
-              </div>
+              )}
+
+              {!isSidebarOpen && (
+                <button
+                  type="button"
+                  className="sidebar-toggle-button"
+                  aria-label="Show files panel"
+                  onClick={() => setIsSidebarOpen(true)}
+                >
+                  Files
+                </button>
+              )}
 
               <div className="file-editor-layout">
                 <div className="editor-language-picker editor-language-picker-inline">
