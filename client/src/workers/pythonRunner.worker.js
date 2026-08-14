@@ -13,7 +13,7 @@ const getPyodide = async () => {
   return pyodidePromise;
 };
 
-self.onmessage = async ({ data: { id, type, code, input: inputValues = [] } }) => {
+self.onmessage = async ({ data: { id, type, code, input: inputValues = [], files = {} } }) => {
   const stdout = [];
   const stderr = [];
 
@@ -44,12 +44,11 @@ self.onmessage = async ({ data: { id, type, code, input: inputValues = [] } }) =
       );
     }
 
-    if (!pyodide.FS.analyzePath("/workspace/hello.py").exists) {
-      pyodide.FS.writeFile(
-        "/workspace/hello.py",
-        'file = open("data.txt", "r")\nprint(file.read())\n',
-      );
-    }
+    Object.entries(files).forEach(([fileName, fileContent]) => {
+      if (typeof fileContent === "string") {
+        pyodide.FS.writeFile(`/workspace/${fileName}`, fileContent);
+      }
+    });
 
     pyodide.setStdin({
       stdin: () => {

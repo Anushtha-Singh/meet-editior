@@ -116,8 +116,11 @@ export const preparePython = () => {
   return preparationPromise;
 };
 
-export const runPython = async (code) => {
+export const runPython = async (code, projectFiles = {}) => {
   await preparePython();
   const inputValues = getPromptInputValues(code);
-  return sendRequest({ type: "run", code, input: inputValues }, EXECUTION_TIMEOUT_MS);
+  return sendRequest(
+    { type: "run", code, input: inputValues, files: projectFiles },
+    EXECUTION_TIMEOUT_MS,
+  );
 };

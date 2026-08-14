@@ -10,16 +10,22 @@ import { preparePython, runPython } from "../services/pythonRunner";
 import socket from "../services/socket";
 
 const STARTER_CODE = {
-  python: 'file = open("data.txt", "r")\nprint(file.read())',
+  python: 'print("Hello, Student!")',
   c: '#include <stdio.h>\n\nint main() {\n  printf("Hello, Student!\\n");\n  return 0;\n}',
+};
+
+const DEFAULT_PROJECT_FILES = {
+  "data.txt": "Alice\nBob\nCharlie\n",
+  "main.py": 'print("Hello, Student!")',
 };
 
 function StudentPage() {
   const [nameInput, setNameInput] = useState("");
   const [studentName, setStudentName] = useState("");
   const [language, setLanguage] = useState("python");
-  const [codeByLanguage, setCodeByLanguage] = useState(STARTER_CODE);
-  const code = codeByLanguage[language];
+  const [projectFiles, setProjectFiles] = useState(DEFAULT_PROJECT_FILES);
+  const [activeFileName, setActiveFileName] = useState("data.txt");
+  const code = projectFiles[activeFileName] ?? "";
   const [output, setOutput] = useState("");
   const [runError, setRunError] = useState("");
   const [isRunning, setIsRunning] = useState(false);
@@ -101,7 +107,10 @@ function StudentPage() {
 
   const handleCodeChange = (nextCode) => {
     codeRef.current = nextCode;
-    setCodeByLanguage((current) => ({ ...current, [language]: nextCode }));
+    setProjectFiles((current) => ({
+      ...current,
+      [activeFileName]: nextCode,
+    }));
     emitCodeChange(nextCode);
   };
 
@@ -109,7 +118,31 @@ function StudentPage() {
     setLanguage(nextLanguage);
     setOutput("");
     setRunError("");
-    codeRef.current = codeByLanguage[nextLanguage];
+
+    if (nextLanguage === "c") {
+      const cStarter =
+        projectFiles["main.c"] ??
+        '#include <stdio.h>\n\nint main() {\n  printf("Hello from C!\\n");\n  return 0;\n}';
+
+      setProjectFiles((current) => ({
+        ...current,
+        "main.c": cStarter,
+      }));
+      setActiveFileName("main.c");
+      codeRef.current = cStarter;
+      return;
+    }
+
+    const pythonStarter =
+      projectFiles["main.py"] ??
+      'print("Hello, Student!")';
+
+    setProjectFiles((current) => ({
+      ...current,
+      "main.py": pythonStarter,
+    }));
+    setActiveFileName("main.py");
+    codeRef.current = pythonStarter;
   };
 
   const handleRun = async () => {
@@ -126,7 +159,7 @@ function StudentPage() {
       const result =
         language === "c"
           ? await runC(code)
-          : await runPython(code);
+          : await runPython(code, projectFiles);
       const nextOutput = result.output || "Program finished with no output.";
       const nextError = result.error || "";
 
@@ -151,6 +184,19 @@ function StudentPage() {
     } finally {
       setIsRunning(false);
     }
+  };
+
+  const handleCreateFile = () => {
+    const fileNumber = Object.keys(projectFiles).filter((name) =>
+      /^file\d+\.py$/.test(name),
+    ).length;
+    const fileName = `file${fileNumber + 1}.py`;
+
+    setProjectFiles((current) => ({
+      ...current,
+      [fileName]: "",
+    }));
+    setActiveFileName(fileName);
   };
 
   if (!studentName) {
@@ -236,25 +282,52 @@ function StudentPage() {
             </div>
           )}
           <section className="student-editor">
-            <div className="editor-language-picker editor-language-picker-inline">
-              <label htmlFor="student-language">Language</label>
-              <select
-                id="student-language"
-                className="language-select"
-                value={language}
-                onChange={(event) => handleLanguageChange(event.target.value)}
-              >
-                <option value="python">Python</option>
-                <option value="c">C</option>
-              </select>
+            <div className="student-file-panel">
+              <div className="file-sidebar">
+                <div className="file-sidebar-header">
+                  <strong>Files</strong>
+                  <button type="button" onClick={handleCreateFile}>
+                    + New
+                  </button>
+                </div>
+                <div className="file-list">
+                  {Object.keys(projectFiles).map((fileName) => (
+                    <button
+                      key={fileName}
+                      type="button"
+                      className={
+                        activeFileName === fileName ? "file-item active" : "file-item"
+                      }
+                      onClick={() => setActiveFileName(fileName)}
+                    >
+                      {fileName}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="file-editor-layout">
+                <div className="editor-language-picker editor-language-picker-inline">
+                  <label htmlFor="student-language">Language</label>
+                  <select
+                    id="student-language"
+                    className="language-select"
+                    value={language}
+                    onChange={(event) => handleLanguageChange(event.target.value)}
+                  >
+                    <option value="python">Python</option>
+                    <option value="c">C</option>
+                  </select>
+                </div>
+                <CodeEditor
+                  code={code}
+                  language={language}
+                  onChange={handleCodeChange}
+                  highlightedLine={teacherFeedback?.line}
+                  mobileToolbar
+                />
+              </div>
             </div>
-            <CodeEditor
-              code={code}
-              language={language}
-              onChange={handleCodeChange}
-              highlightedLine={teacherFeedback?.line}
-              mobileToolbar
-            />
           </section>
 
           <OutputPanel
