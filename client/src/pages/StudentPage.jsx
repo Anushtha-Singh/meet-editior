@@ -10,7 +10,7 @@ import { preparePython, runPython } from "../services/pythonRunner";
 import socket from "../services/socket";
 
 const STARTER_CODE = {
-  python: 'print("Hello, Student!")',
+  python: 'file = open("data.txt", "r")\nprint(file.read())',
   c: '#include <stdio.h>\n\nint main() {\n  printf("Hello, Student!\\n");\n  return 0;\n}',
 };
 

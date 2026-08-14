@@ -13,7 +13,7 @@ const getPyodide = async () => {
   return pyodidePromise;
 };
 
-self.onmessage = async ({ data: { id, type, code } }) => {
+self.onmessage = async ({ data: { id, type, code, input: inputValues = [] } }) => {
   const stdout = [];
   const stderr = [];
 
@@ -30,6 +30,37 @@ self.onmessage = async ({ data: { id, type, code } }) => {
     });
     pyodide.setStderr({
       batched: (message) => stderr.push(message),
+    });
+
+    const inputQueue = [...(Array.isArray(inputValues) ? inputValues : [])];
+
+    pyodide.FS.mkdir("/workspace");
+    pyodide.FS.chdir("/workspace");
+
+    if (!pyodide.FS.analyzePath("/workspace/data.txt").exists) {
+      pyodide.FS.writeFile(
+        "/workspace/data.txt",
+        "Alice\nBob\nCharlie\n",
+      );
+    }
+
+    if (!pyodide.FS.analyzePath("/workspace/hello.py").exists) {
+      pyodide.FS.writeFile(
+        "/workspace/hello.py",
+        'file = open("data.txt", "r")\nprint(file.read())\n',
+      );
+    }
+
+    pyodide.setStdin({
+      stdin: () => {
+        const nextValue = inputQueue.shift();
+
+        if (nextValue === undefined) {
+          return "";
+        }
+
+        return `${String(nextValue)}\n`;
+      },
     });
 
     await pyodide.loadPackagesFromImports(code);

@@ -13,6 +13,13 @@ const allowedOrigins = (process.env.CLIENT_ORIGIN || "http://localhost:5173")
 app.use(cors({ origin: allowedOrigins }));
 app.use(express.json());
 
+const isGccInstalled = () =>
+    new Promise((resolve) => {
+        execFile("gcc", ["--version"], { timeout: 2000 }, (error) => {
+            resolve(!error);
+        });
+    });
+
 const runCCode = (code) =>
     new Promise((resolve, reject) => {
         const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "c-runner-"));
@@ -83,6 +90,16 @@ app.post("/api/run-code", async (req, res) => {
 
     if (language === "c") {
         try {
+            const gccAvailable = await isGccInstalled();
+
+            if (!gccAvailable) {
+                res.status(500).json({
+                    error:
+                        "C runtime is unavailable because GCC is not installed. Install MinGW-w64 on Windows or GCC on Linux/macOS, then restart the server.",
+                });
+                return;
+            }
+
             const result = await runCCode(code);
             res.json({
                 output: result.output,

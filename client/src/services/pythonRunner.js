@@ -78,6 +78,28 @@ const sendRequest = (message, timeoutMs) =>
     activeWorker.postMessage({ id, ...message });
   });
 
+const getPromptInputValues = (code) => {
+  const inputCalls = code.match(/\binput\s*\(/g) || [];
+
+  if (inputCalls.length === 0) {
+    return [];
+  }
+
+  const values = [];
+
+  for (let index = 0; index < inputCalls.length; index += 1) {
+    const value = window.prompt(`Python input ${index + 1}`, "");
+
+    if (value === null) {
+      throw new Error("Execution cancelled before all inputs were provided.");
+    }
+
+    values.push(value);
+  }
+
+  return values;
+};
+
 let preparationPromise;
 
 export const preparePython = () => {
@@ -96,5 +118,6 @@ export const preparePython = () => {
 
 export const runPython = async (code) => {
   await preparePython();
-  return sendRequest({ type: "run", code }, EXECUTION_TIMEOUT_MS);
+  const inputValues = getPromptInputValues(code);
+  return sendRequest({ type: "run", code, input: inputValues }, EXECUTION_TIMEOUT_MS);
 };
