@@ -147,12 +147,10 @@ function StudentPage() {
 
   const handleRun = async () => {
     setIsRunning(true);
-    setOutput("");
-    setRunError("");
     socket.emit("execution-change", {
       status: "running",
-      output: "",
-      error: "",
+      output,
+      error: runError,
     });
 
     try {

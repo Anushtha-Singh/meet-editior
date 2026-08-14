@@ -106,15 +106,20 @@ function TeacherPage() {
 
   const handleTeacherRun = async () => {
     setIsTeacherRunning(true);
-    setLocalTeacherExecution({
-      status: "running",
+    const previousExecution = localTeacherExecution ?? {
+      status: "idle",
       output: "",
       error: "",
+    };
+
+    setLocalTeacherExecution({
+      ...previousExecution,
+      status: "running",
     });
     socket.emit("teacher-execution-change", {
       status: "running",
-      output: "",
-      error: "",
+      output: previousExecution.output,
+      error: previousExecution.error,
     });
 
     try {
