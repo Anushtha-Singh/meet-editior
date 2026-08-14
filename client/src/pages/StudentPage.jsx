@@ -16,6 +16,12 @@ const STARTER_CODE = {
 
 const DEFAULT_PROJECT_FILES = {
   "data.txt": "Alice\nBob\nCharlie\n",
+  "notes.txt": "Hello Python!\nThis is a new line.\n",
+  "story.txt": "Once upon a time there was a programmer who loved Python.\n",
+  "diary.txt": "12 May 2025:\nLearned file handling.\n",
+  "poem.txt": "Twinkle, twinkle,\nlittle star,\nHow I wonder what you are!\n",
+  "marks.txt": "Anu, 95\nRavi, 88\n",
+  "info.txt": "Name: Anu\nAge: 18\nCity: Delhi\n",
   "main.py": 'print("Hello, Student!")',
 };
 
@@ -169,6 +175,13 @@ function StudentPage() {
           : result.error && typeof result.error.message === "string"
             ? result.error.message
             : String(result.error ?? "");
+
+      if (result && result.files && typeof result.files === "object") {
+        setProjectFiles((current) => ({
+          ...current,
+          ...result.files,
+        }));
+      }
 
       setOutput(nextOutput);
       setRunError(nextError);

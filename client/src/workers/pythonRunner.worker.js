@@ -70,15 +70,29 @@ self.onmessage = async ({ data: { id, type, code, input: inputValues = [], files
     await pyodide.loadPackagesFromImports(code);
     await pyodide.runPythonAsync(code);
 
-    self.postMessage({
-      id,
-      output: [...stdout, ...stderr].join("\n"),
-    });
-  } catch (error) {
-    self.postMessage({
-      id,
-      error: error instanceof Error ? error.message : String(error),
-      output: [...stdout, ...stderr].join("\n"),
-    });
-  }
-};
+      const fileMap = {};
+      const workspaceFiles = [];
+
+      pyodide.FS.readdir(workspacePath).forEach((entry) => {
+        if (entry === "." || entry === "..") {
+          return;
+        }
+
+        workspaceFiles.push(entry);
+      });
+
+      workspaceFiles.forEach((fileName) => {
+        try {
+          const fileContent = pyodide.FS.readFile(`/workspace/${fileName}`, {
+            encoding: "utf8",
+          });
+          fileMap[fileName] = fileContent;
+        } catch {
+          // ignore non-text files
+        }
+      });
+
+      self.postMessage({
+        id,
+        output: [...stdout, ...stderr].join("\n"),
+        files: fileMap,
