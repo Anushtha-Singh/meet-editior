@@ -773,11 +773,35 @@ button:disabled {
     text-align: right;
   }
 
+  .student-editor,
+  .student-workspace,
+  .file-editor-layout,
+  .code-editor-shell,
+  .monaco-container {
+    min-height: 0;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .student-file-panel {
+    min-width: 0;
+  }
+
   .mobile-symbol-toolbar {
     border-bottom: 1px solid #283247;
     border-top: 0;
     display: flex;
+    flex-wrap: nowrap;
     order: -1;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 4px;
+    scrollbar-width: thin;
+    touch-action: pan-x;
+  }
+
+  .mobile-symbol-toolbar button {
+    flex: 0 0 auto;
   }
 
   .output-panel {

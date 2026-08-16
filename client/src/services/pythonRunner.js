@@ -119,8 +119,17 @@ export const preparePython = () => {
 export const runPython = async (code, projectFiles = {}) => {
   await preparePython();
   const inputValues = getPromptInputValues(code);
-  return sendRequest(
+  const result = await sendRequest(
     { type: "run", code, input: inputValues, files: projectFiles },
     EXECUTION_TIMEOUT_MS,
   );
+
+  if (result && result.files && typeof result.files === "object") {
+    return {
+      ...result,
+      files: result.files,
+    };
+  }
+
+  return result;
 };
