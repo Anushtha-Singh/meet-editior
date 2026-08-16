@@ -10,6 +10,10 @@ import { preparePython, runPython } from "../services/pythonRunner";
 import socket from "../services/socket";
 
 const MAX_PDF_SIZE = 8 * 1024 * 1024;
+const DEFAULT_TEACHER_CODE = {
+  python: 'print("Follow along!")',
+  c: '#include <stdio.h>\n\nint main() {\n  printf("Follow along!\\n");\n  return 0;\n}',
+};
 
 function TeacherPage() {
   const [students, setStudents] = useState([]);
@@ -98,7 +102,22 @@ function TeacherPage() {
   };
 
   const handleLanguageChange = (nextLanguage) => {
+    const defaultCode = DEFAULT_TEACHER_CODE[nextLanguage] ?? DEFAULT_TEACHER_CODE.python;
+    const isDefaultCode =
+      teacherCode.trim() === "" ||
+      teacherCode === DEFAULT_TEACHER_CODE.python ||
+      teacherCode === DEFAULT_TEACHER_CODE.c;
+
     setLanguage(nextLanguage);
+    setTeacherCode((currentCode) => {
+      const safeCurrent = currentCode ?? "";
+      if (safeCurrent.trim() && !isDefaultCode) {
+        return safeCurrent;
+      }
+      return defaultCode;
+    });
+    socket.emit("teacher-code-change", isDefaultCode ? defaultCode : teacherCode);
+
     if (nextLanguage === "c") {
       setCStatus("ready");
     }
@@ -127,8 +146,17 @@ function TeacherPage() {
         language === "c"
           ? await runC(teacherCode)
           : await runPython(teacherCode);
-      const nextOutput = result.output || "Program finished with no output.";
-      const nextError = result.error || "";
+      const nextOutput =
+        typeof result.output === "string"
+          ? result.output || "Program finished with no output."
+          : String(result.output ?? "Program finished with no output.");
+      const nextError =
+        typeof result.error === "string"
+          ? result.error
+          : result.error && typeof result.error.message === "string"
+            ? result.error.message
+            : String(result.error ?? "");
+
       setLocalTeacherExecution({
         status: "completed",
         output: nextOutput,
@@ -141,8 +169,10 @@ function TeacherPage() {
       });
     } catch (error) {
       const message =
-        error.message ||
-        `Unable to execute ${language === "c" ? "C" : "Python"}.`;
+        error && typeof error.message === "string"
+          ? error.message
+          : String(error ?? `Unable to execute ${language === "c" ? "C" : "Python"}.`);
+
       setLocalTeacherExecution({
         status: "completed",
         output: "",

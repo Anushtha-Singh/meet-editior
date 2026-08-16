@@ -30,8 +30,7 @@ function StudentPage() {
   const [studentName, setStudentName] = useState("");
   const [language, setLanguage] = useState("python");
   const [projectFiles, setProjectFiles] = useState(DEFAULT_PROJECT_FILES);
-  const [activeFileName, setActiveFileName] = useState("data.txt");
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [activeFileName, setActiveFileName] = useState("main.py");
   const code = projectFiles[activeFileName] ?? "";
   const [output, setOutput] = useState("");
   const [runError, setRunError] = useState("");
@@ -207,60 +206,6 @@ function StudentPage() {
     }
   };
 
-  const handleCreateFile = () => {
-    const fileNumber = Object.keys(projectFiles).filter((name) =>
-      /^file\d+\.py$/.test(name),
-    ).length;
-    const fileName = `file${fileNumber + 1}.py`;
-
-    setProjectFiles((current) => ({
-      ...current,
-      [fileName]: "",
-    }));
-    setActiveFileName(fileName);
-  };
-
-  const handleRenameFile = () => {
-    const nextName = window.prompt("Rename file", activeFileName);
-
-    if (!nextName) {
-      return;
-    }
-
-    const cleanName = nextName.trim();
-
-    if (!cleanName || cleanName === activeFileName) {
-      return;
-    }
-
-    if (projectFiles[cleanName]) {
-      setRunError("A file with that name already exists.");
-      return;
-    }
-
-    setProjectFiles((current) => {
-      const nextFiles = { ...current };
-      nextFiles[cleanName] = nextFiles[activeFileName];
-      delete nextFiles[activeFileName];
-      return nextFiles;
-    });
-    setActiveFileName(cleanName);
-  };
-
-  const handleDeleteFile = () => {
-    if (Object.keys(projectFiles).length <= 1) {
-      setRunError("Keep at least one file in the project.");
-      return;
-    }
-
-    const nextFiles = { ...projectFiles };
-    delete nextFiles[activeFileName];
-    const remaining = Object.keys(nextFiles);
-
-    setProjectFiles(nextFiles);
-    setActiveFileName(remaining[0]);
-  };
-
   if (!studentName) {
     return (
       <main className="join-page">
@@ -344,85 +289,26 @@ function StudentPage() {
             </div>
           )}
           <section className="student-editor">
-            <div className={`student-file-panel ${isSidebarOpen ? "" : "sidebar-collapsed"}`}>
-              {isSidebarOpen && (
-                <div className="file-sidebar">
-                  <div className="file-sidebar-header">
-                    <strong>Files</strong>
-                    <div className="file-sidebar-actions">
-                      <button type="button" onClick={handleCreateFile}>
-                        + New
-                      </button>
-                      <button
-                        type="button"
-                        className="icon-button"
-                        aria-label="Hide files panel"
-                        onClick={() => setIsSidebarOpen(false)}
-                      >
-                        ‹
-                      </button>
-                    </div>
-                  </div>
-                  <div className="file-list">
-                    {Object.keys(projectFiles).map((fileName) => (
-                      <button
-                        key={fileName}
-                        type="button"
-                        className={
-                          activeFileName === fileName ? "file-item active" : "file-item"
-                        }
-                        onClick={() => setActiveFileName(fileName)}
-                      >
-                        {fileName}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="file-toolbar">
-                    <button type="button" onClick={handleRenameFile}>
-                      Rename
-                    </button>
-                    <button type="button" onClick={handleDeleteFile}>
-                      Delete
-                    </button>
-                    <button type="button" onClick={handleRun}>
-                      Run this file
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {!isSidebarOpen && (
-                <button
-                  type="button"
-                  className="sidebar-toggle-button"
-                  aria-label="Show files panel"
-                  onClick={() => setIsSidebarOpen(true)}
+            <div className="file-editor-layout">
+              <div className="editor-language-picker editor-language-picker-inline">
+                <label htmlFor="student-language">Language</label>
+                <select
+                  id="student-language"
+                  className="language-select"
+                  value={language}
+                  onChange={(event) => handleLanguageChange(event.target.value)}
                 >
-                  Files
-                </button>
-              )}
-
-              <div className="file-editor-layout">
-                <div className="editor-language-picker editor-language-picker-inline">
-                  <label htmlFor="student-language">Language</label>
-                  <select
-                    id="student-language"
-                    className="language-select"
-                    value={language}
-                    onChange={(event) => handleLanguageChange(event.target.value)}
-                  >
-                    <option value="python">Python</option>
-                    <option value="c">C</option>
-                  </select>
-                </div>
-                <CodeEditor
-                  code={code}
-                  language={language}
-                  onChange={handleCodeChange}
-                  highlightedLine={teacherFeedback?.line}
-                  mobileToolbar
-                />
+                  <option value="python">Python</option>
+                  <option value="c">C</option>
+                </select>
               </div>
+              <CodeEditor
+                code={code}
+                language={language}
+                onChange={handleCodeChange}
+                highlightedLine={teacherFeedback?.line}
+                mobileToolbar
+              />
             </div>
           </section>
 

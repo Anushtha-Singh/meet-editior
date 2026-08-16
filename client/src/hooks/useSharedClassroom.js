@@ -9,8 +9,13 @@ const EMPTY_PRESENTATION = {
   strokes: [],
 };
 
+const DEFAULT_TEACHER_CODE = {
+  python: 'print("Follow along!")',
+  c: '#include <stdio.h>\n\nint main() {\n  printf("Follow along!\\n");\n  return 0;\n}',
+};
+
 function useSharedClassroom() {
-  const [teacherCode, setTeacherCode] = useState("");
+  const [teacherCode, setTeacherCode] = useState(DEFAULT_TEACHER_CODE.python);
   const [teacherExecution, setTeacherExecution] = useState({
     status: "idle",
     output: "",
