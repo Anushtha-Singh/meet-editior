@@ -210,6 +210,8 @@ button:disabled {
   flex: 1;
   flex-direction: column;
   min-height: 0;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .teacher-feedback-line {
@@ -542,8 +544,10 @@ button:disabled {
   border-bottom: 1px solid #283247;
   color: #cbd5e1;
   display: flex;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 8px 12px;
   justify-content: space-between;
+  min-width: 0;
   padding: 10px 16px;
 }
 
@@ -555,8 +559,11 @@ button:disabled {
 .editor-language-picker {
   align-items: center;
   display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
   gap: 8px;
   margin-left: auto;
+  max-width: 100%;
 }
 
 .editor-language-picker label {
@@ -587,8 +594,9 @@ button:disabled {
 }
 
 .editor-language-picker-inline {
-  justify-content: flex-end;
+  justify-content: flex-start;
   margin: 0 0 8px;
+  max-width: 100%;
   padding: 8px 12px 0;
 }
 
@@ -771,6 +779,16 @@ button:disabled {
   .connection {
     max-width: 145px;
     text-align: right;
+  }
+
+  .shared-workspace-title .editor-language-picker {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .shared-workspace-title strong {
+    flex: 1 1 auto;
+    min-width: 0;
   }
 
   .student-editor,
