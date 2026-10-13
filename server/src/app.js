@@ -104,21 +104,130 @@ const runCCode = (code, compiler = "gcc") =>
         );
     });
 
+let cachedJavaCmd = null;
+
+const getJavaCandidatePaths = () => {
+    const candidates = ["java", "java.exe"];
+
+    // Local project-level portable JDK (e.g. installed on Render via scripts/install-java.js)
+    candidates.push(
+        path.join(__dirname, "..", ".jdk", "bin", "java"),
+        path.join(process.cwd(), ".jdk", "bin", "java"),
+        path.join(__dirname, "..", ".jdk", "bin", "java.exe"),
+        path.join(process.cwd(), ".jdk", "bin", "java.exe"),
+    );
+
+    if (process.env.JAVA_HOME) {
+        candidates.push(path.join(process.env.JAVA_HOME, "bin", "java.exe"));
+        candidates.push(path.join(process.env.JAVA_HOME, "bin", "java"));
+    }
+
+    // Standard Linux paths (Render, Ubuntu, Debian, Docker)
+    candidates.push(
+        "/usr/bin/java",
+        "/usr/local/bin/java",
+        "/usr/lib/jvm/default-java/bin/java",
+        "/opt/java/openjdk/bin/java",
+    );
+
+    if (fs.existsSync("/usr/lib/jvm")) {
+        try {
+            const jvmDirs = fs.readdirSync("/usr/lib/jvm");
+            for (const jvmDir of jvmDirs) {
+                candidates.push(path.join("/usr/lib/jvm", jvmDir, "bin", "java"));
+            }
+        } catch (_) {}
+    }
+
+    const programFiles = process.env.ProgramFiles || "C:\\Program Files";
+    const programFilesX86 =
+        process.env["ProgramFiles(x86)"] || "C:\\Program Files (x86)";
+
+    candidates.push(
+        path.join(
+            programFiles,
+            "Common Files",
+            "Oracle",
+            "Java",
+            "javapath",
+            "java.exe",
+        ),
+        path.join(
+            programFilesX86,
+            "Common Files",
+            "Oracle",
+            "Java",
+            "javapath",
+            "java.exe",
+        ),
+    );
+
+    for (const baseDir of [
+        path.join(programFiles, "Java"),
+        path.join(programFiles, "Eclipse Adoptium"),
+        path.join(programFiles, "Microsoft"),
+        path.join(programFiles, "Amazon Corretto"),
+    ]) {
+        if (fs.existsSync(baseDir)) {
+            try {
+                const subdirs = fs.readdirSync(baseDir);
+                for (const sub of subdirs) {
+                    candidates.push(path.join(baseDir, sub, "bin", "java.exe"));
+                }
+            } catch (_) {}
+        }
+    }
+
+    return [
+        ...new Set(
+            candidates.filter((c) => !path.isAbsolute(c) || fs.existsSync(c)),
+        ),
+    ];
+};
+
 const detectJavaRuntime = () =>
     new Promise((resolve) => {
-        execFile("java", ["-version"], { timeout: 2000 }, (javaErr) => {
-            if (!javaErr) {
-                resolve("java");
+        if (cachedJavaCmd) {
+            resolve(cachedJavaCmd);
+            return;
+        }
+
+        const candidates = getJavaCandidatePaths();
+        let index = 0;
+
+        const tryNext = () => {
+            if (index >= candidates.length) {
+                execFile("javac", ["-version"], { timeout: 5000 }, (javacErr) => {
+                    if (!javacErr) {
+                        cachedJavaCmd = "javac";
+                        resolve("javac");
+                        return;
+                    }
+                    resolve(null);
+                });
                 return;
             }
-            execFile("javac", ["-version"], { timeout: 2000 }, (javacErr) => {
-                if (!javacErr) {
-                    resolve("javac");
+
+            const candidate = candidates[index];
+            execFile(candidate, ["-version"], { timeout: 5000 }, (error) => {
+                if (!error) {
+                    if (path.isAbsolute(candidate)) {
+                        const binDir = path.dirname(candidate);
+                        if (!process.env.PATH?.includes(binDir)) {
+                            process.env.PATH = `${binDir};${process.env.PATH || ""}`;
+                        }
+                    }
+                    cachedJavaCmd = candidate;
+                    resolve(candidate);
                     return;
                 }
-                resolve(null);
+
+                index += 1;
+                tryNext();
             });
-        });
+        };
+
+        tryNext();
     });
 
 const extractJavaClassName = (code) => {
@@ -179,8 +288,15 @@ const runJavaCode = (code, javaCmd = "java") =>
                 }
 
                 // 2. Fallback: javac then java -cp
+                const javacCmd = path.isAbsolute(javaCmd)
+                    ? path.join(
+                          path.dirname(javaCmd),
+                          process.platform === "win32" ? "javac.exe" : "javac",
+                      )
+                    : "javac";
+
                 execFile(
-                    "javac",
+                    javacCmd,
                     [sourcePath],
                     { timeout: 5000, maxBuffer: 1024 * 1024 },
                     (compileErr, compileStdout, compileStderr) => {
