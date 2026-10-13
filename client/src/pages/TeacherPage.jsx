@@ -6,6 +6,7 @@ import StudentMonitorCard from "../components/StudentMonitorCard";
 import useSharedClassroom from "../hooks/useSharedClassroom";
 import useSocketStatus from "../hooks/useSocketStatus";
 import { runC } from "../services/cRunner";
+import { runJava } from "../services/javaRunner";
 import { preparePython, runPython } from "../services/pythonRunner";
 import socket from "../services/socket";
 
@@ -13,6 +14,7 @@ const MAX_PDF_SIZE = 8 * 1024 * 1024;
 const DEFAULT_TEACHER_CODE = {
   python: 'print("Follow along!")',
   c: '#include <stdio.h>\n\nint main() {\n  printf("Follow along!\\n");\n  return 0;\n}',
+  java: 'public class Main {\n  public static void main(String[] args) {\n    System.out.println("Follow along!");\n  }\n}',
 };
 
 function TeacherPage() {
@@ -25,6 +27,7 @@ function TeacherPage() {
   const [localTeacherExecution, setLocalTeacherExecution] = useState(null);
   const [pythonStatus, setPythonStatus] = useState("loading");
   const [cStatus, setCStatus] = useState("ready");
+  const [javaStatus, setJavaStatus] = useState("ready");
   const [language, setLanguage] = useState("python");
   const isConnected = useSocketStatus();
   const { teacherCode, setTeacherCode, teacherExecution, presentation } =
@@ -106,7 +109,8 @@ function TeacherPage() {
     const isDefaultCode =
       teacherCode.trim() === "" ||
       teacherCode === DEFAULT_TEACHER_CODE.python ||
-      teacherCode === DEFAULT_TEACHER_CODE.c;
+      teacherCode === DEFAULT_TEACHER_CODE.c ||
+      teacherCode === DEFAULT_TEACHER_CODE.java;
 
     setLanguage(nextLanguage);
     setTeacherCode((currentCode) => {
@@ -120,6 +124,8 @@ function TeacherPage() {
 
     if (nextLanguage === "c") {
       setCStatus("ready");
+    } else if (nextLanguage === "java") {
+      setJavaStatus("ready");
     }
   };
 
@@ -145,7 +151,9 @@ function TeacherPage() {
       const result =
         language === "c"
           ? await runC(teacherCode)
-          : await runPython(teacherCode);
+          : language === "java"
+            ? await runJava(teacherCode)
+            : await runPython(teacherCode);
       const nextOutput =
         typeof result.output === "string"
           ? result.output || "Program finished with no output."
@@ -168,10 +176,12 @@ function TeacherPage() {
         error: nextError,
       });
     } catch (error) {
+      const languageLabel =
+        language === "c" ? "C" : language === "java" ? "Java" : "Python";
       const message =
         error && typeof error.message === "string"
           ? error.message
-          : String(error ?? `Unable to execute ${language === "c" ? "C" : "Python"}.`);
+          : String(error ?? `Unable to execute ${languageLabel}.`);
 
       setLocalTeacherExecution({
         status: "completed",
@@ -293,6 +303,7 @@ function TeacherPage() {
               >
                 <option value="python">Python</option>
                 <option value="c">C</option>
+                <option value="java">Java</option>
               </select>
             </div>
             <span>Updates live</span>
@@ -313,8 +324,16 @@ function TeacherPage() {
                 ? "running"
                 : (localTeacherExecution ?? teacherExecution).status
             }
-            runtimeStatus={language === "c" ? cStatus : pythonStatus}
-            language={language === "c" ? "C" : "Python"}
+            runtimeStatus={
+              language === "c"
+                ? cStatus
+                : language === "java"
+                  ? javaStatus
+                  : pythonStatus
+            }
+            language={
+              language === "c" ? "C" : language === "java" ? "Java" : "Python"
+            }
             resizable
           />
           <footer className="app-footer">
@@ -333,7 +352,11 @@ function TeacherPage() {
                   : "▶ Run Code"}
             </button>
             <span>
-              {language === "c" ? "Teacher C preview" : "Teacher Python preview"}
+              {language === "c"
+                ? "Teacher C preview"
+                : language === "java"
+                  ? "Teacher Java preview"
+                  : "Teacher Python preview"}
             </span>
           </footer>
         </section>

@@ -6,12 +6,14 @@ import useCodeSync from "../hooks/useCodeSync";
 import useSharedClassroom from "../hooks/useSharedClassroom";
 import useSocketStatus from "../hooks/useSocketStatus";
 import { runC } from "../services/cRunner";
+import { runJava } from "../services/javaRunner";
 import { preparePython, runPython } from "../services/pythonRunner";
 import socket from "../services/socket";
 
 const STARTER_CODE = {
   python: 'print("Hello, Student!")',
   c: '#include <stdio.h>\n\nint main() {\n  printf("Hello, Student!\\n");\n  return 0;\n}',
+  java: 'public class Main {\n  public static void main(String[] args) {\n    System.out.println("Hello, Student!");\n  }\n}',
 };
 
 const DEFAULT_PROJECT_FILES = {
@@ -36,14 +38,17 @@ function StudentPage() {
   const editorLanguage =
     activeFileName.endsWith(".c")
       ? "c"
-      : activeFileName.endsWith(".py")
-        ? "python"
-        : "plaintext";
+      : activeFileName.endsWith(".java")
+        ? "java"
+        : activeFileName.endsWith(".py")
+          ? "python"
+          : "plaintext";
   const [output, setOutput] = useState("");
   const [runError, setRunError] = useState("");
   const [isRunning, setIsRunning] = useState(false);
   const [pythonStatus, setPythonStatus] = useState("loading");
-  const [cStatus, setCStatus] = useState("ready");
+  const [cStatus] = useState("ready");
+  const [javaStatus] = useState("ready");
   const [activeTab, setActiveTab] = useState("code");
   const [teacherFeedback, setTeacherFeedback] = useState(null);
   const [studentPdfPage, setStudentPdfPage] = useState(null);
@@ -146,6 +151,19 @@ function StudentPage() {
       return;
     }
 
+    if (nextLanguage === "java") {
+      const javaStarter =
+        projectFiles["Main.java"] ?? STARTER_CODE.java;
+
+      setProjectFiles((current) => ({
+        ...current,
+        "Main.java": javaStarter,
+      }));
+      setActiveFileName("Main.java");
+      codeRef.current = javaStarter;
+      return;
+    }
+
     const pythonStarter =
       projectFiles["main.py"] ??
       'print("Hello, Student!")';
@@ -177,10 +195,24 @@ function StudentPage() {
           : activeFileName;
       const pythonCode = syncedProjectFiles[pythonEntryFile] ?? codeRef.current;
 
+      const javaEntryFile =
+        language === "java" && !activeFileName.endsWith(".java")
+          ? (syncedProjectFiles["Main.java"] ? "Main.java" : activeFileName)
+          : activeFileName;
+      const javaCode = syncedProjectFiles[javaEntryFile] ?? codeRef.current;
+
+      const cEntryFile =
+        language === "c" && !activeFileName.endsWith(".c")
+          ? (syncedProjectFiles["main.c"] ? "main.c" : activeFileName)
+          : activeFileName;
+      const cCode = syncedProjectFiles[cEntryFile] ?? codeRef.current;
+
       const result =
         language === "c"
-          ? await runC(code)
-          : await runPython(pythonCode, syncedProjectFiles);
+          ? await runC(cCode)
+          : language === "java"
+            ? await runJava(javaCode)
+            : await runPython(pythonCode, syncedProjectFiles);
       const nextOutput =
         typeof result.output === "string"
           ? result.output || "Program finished with no output."
@@ -207,10 +239,12 @@ function StudentPage() {
         error: nextError,
       });
     } catch (error) {
+      const languageLabel =
+        language === "c" ? "C" : language === "java" ? "Java" : "Python";
       const message =
         error && typeof error.message === "string"
           ? error.message
-          : String(error ?? `Unable to execute ${language === "c" ? "C" : "Python"}.`);
+          : String(error ?? `Unable to execute ${languageLabel}.`);
 
       setRunError(message);
       socket.emit("execution-change", {
@@ -224,16 +258,33 @@ function StudentPage() {
   };
 
   const handleCreateFile = () => {
-    const fileNumber = Object.keys(projectFiles).filter((name) =>
-      /^file\d+\.py$/.test(name),
+    const ext = language === "java" ? "java" : language === "c" ? "c" : "py";
+    const existingFiles = Object.keys(projectFiles);
+    const fileCount = existingFiles.filter((name) =>
+      name.endsWith(`.${ext}`),
     ).length;
-    const fileName = `file${fileNumber + 1}.py`;
+
+    let fileName;
+    let starterContent = "";
+
+    if (language === "java") {
+      const className = `Class${fileCount + 1}`;
+      fileName = `${className}.java`;
+      starterContent = `public class ${className} {\n  public static void main(String[] args) {\n    System.out.println("Hello from ${className}!");\n  }\n}\n`;
+    } else if (language === "c") {
+      fileName = `file${fileCount + 1}.c`;
+      starterContent = `#include <stdio.h>\n\nint main() {\n  printf("Hello from ${fileName}!\\n");\n  return 0;\n}\n`;
+    } else {
+      fileName = `file${fileCount + 1}.py`;
+      starterContent = `print("Hello from ${fileName}!")\n`;
+    }
 
     setProjectFiles((current) => ({
       ...current,
-      [fileName]: "",
+      [fileName]: starterContent,
     }));
     setActiveFileName(fileName);
+    codeRef.current = starterContent;
   };
 
   const handleRenameFile = () => {
@@ -426,6 +477,7 @@ function StudentPage() {
                   >
                     <option value="python">Python</option>
                     <option value="c">C</option>
+                    <option value="java">Java</option>
                   </select>
                 </div>
                 <CodeEditor
@@ -445,8 +497,16 @@ function StudentPage() {
             status={
               isRunning ? "running" : output || runError ? "completed" : "idle"
             }
-            runtimeStatus={language === "c" ? cStatus : pythonStatus}
-            language={language === "c" ? "C" : "Python"}
+            runtimeStatus={
+              language === "c"
+                ? cStatus
+                : language === "java"
+                  ? javaStatus
+                  : pythonStatus
+            }
+            language={
+              language === "c" ? "C" : language === "java" ? "Java" : "Python"
+            }
             resizable
           />
 
@@ -466,7 +526,11 @@ function StudentPage() {
                   : "▶ Run Code"}
             </button>
             <span>
-              {language === "c" ? "C · GCC runtime" : "Python 3 · Browser runtime"}
+              {language === "c"
+                ? "C · GCC runtime"
+                : language === "java"
+                  ? "Java · JDK runtime"
+                  : "Python 3 · Browser runtime"}
             </span>
           </footer>
         </div>
@@ -481,6 +545,14 @@ function StudentPage() {
           <div className="shared-editor">
             <CodeEditor
               code={teacherCode || "# Waiting for the teacher to type..."}
+              language={
+                teacherCode?.includes("#include")
+                  ? "c"
+                  : teacherCode?.includes("class ") ||
+                      teacherCode?.includes("System.out")
+                    ? "java"
+                    : "python"
+              }
               readOnly
               remoteUpdates
             />

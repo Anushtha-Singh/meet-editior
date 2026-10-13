@@ -1,7 +1,7 @@
 import Editor from "@monaco-editor/react";
 import { memo, useEffect, useMemo, useRef } from "react";
 
-const SYMBOLS = ["()", "[]", "{}", ":", '"', "'", "=", "_", "#"];
+const SYMBOLS = ["()", "[]", "{}", ";", ":", '"', "'", "=", "_", "#"];
 
 const getFeedbackDecorations = (line) =>
   Number.isInteger(line)

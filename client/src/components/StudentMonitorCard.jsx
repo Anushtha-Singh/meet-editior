@@ -1,4 +1,4 @@
-import { memo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import socket from "../services/socket";
 import CodeEditor from "./CodeEditor";
 import OutputPanel from "./OutputPanel";
@@ -6,6 +6,19 @@ import OutputPanel from "./OutputPanel";
 function StudentMonitorCard({ student }) {
   const [selectedLine, setSelectedLine] = useState(student.feedback?.line ?? 1);
   const [message, setMessage] = useState(student.feedback?.message ?? "");
+
+  const language = useMemo(() => {
+    if (!student.code) return "python";
+    if (student.code.includes("#include")) return "c";
+    if (
+      student.code.includes("class ") ||
+      student.code.includes("System.out") ||
+      student.code.includes("public static void main")
+    ) {
+      return "java";
+    }
+    return "python";
+  }, [student.code]);
 
   const sendFeedback = () => {
     socket.emit("teacher-student-feedback", {
@@ -37,6 +50,7 @@ function StudentMonitorCard({ student }) {
       <div className="teacher-editor">
         <CodeEditor
           code={student.code}
+          language={language}
           readOnly
           remoteUpdates
           highlightedLine={student.feedback?.line}
